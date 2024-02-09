@@ -90,6 +90,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-apache5:$ktorVersion")
                 implementation("ch.qos.logback:logback-classic:$logbackVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+                implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
             }
         }
         val jvmTest by getting {

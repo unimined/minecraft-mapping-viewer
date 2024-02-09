@@ -1,10 +1,8 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.sources
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.utils.io.core.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray

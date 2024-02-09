@@ -15,9 +15,9 @@ import okio.Buffer
 import okio.source
 import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.YarnSource
 import xyz.wagyourtail.unimined.mapping.EnvType
-import xyz.wagyourtail.unimined.mapping.formats.FormatRegistry
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFReader
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFWriter
+import xyz.wagyourtail.unimined.mapping.formats.zip.ZipReader
 import xyz.wagyourtail.unimined.mapping.tree.MappingTree
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -58,7 +58,7 @@ class MappingProvider(updateTime: Long) {
         for (source in mappingSources) {
             val map = source.getMappings(mcVersion, httpClient)
             if (map != null) {
-                FormatRegistry.autodetectFormat(EnvType.JOINED, map.first, map.second.peek())!!.read(EnvType.JOINED, map.second, mappings, mappings, mapOf())
+                ZipReader.read(EnvType.JOINED, map.second, mappings, mappings, mapOf())
             }
         }
         val temp = cacheFile.resolveSibling(cacheFile.fileName.toString() + ".tmp")
