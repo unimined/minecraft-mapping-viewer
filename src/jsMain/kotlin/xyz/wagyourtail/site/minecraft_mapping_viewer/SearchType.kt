@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2
+package xyz.wagyourtail.site.minecraft_mapping_viewer
 
 enum class SearchType(val displayName: String) {
     KEYWORD("Keyword"),

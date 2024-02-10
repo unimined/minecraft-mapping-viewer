@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.classes
+package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes
 
 import io.kvision.core.Overflow
 import io.kvision.core.onClick
@@ -7,12 +7,12 @@ import io.kvision.panel.*
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
 import kotlinx.browser.window
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.BetterTable
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.BetterTabPanel
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.FasterSplitPanel
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.ClassViewer
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.info.InfoViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer
 import xyz.wagyourtail.unimined.mapping.jvms.ext.NameAndDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
 import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
@@ -32,10 +32,12 @@ class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNod
     }
 
     val methodList = BetterTable(className = "method-table").apply {
+        setStyle("word-break", "break-word")
         height = 100.perc
     }
 
     val fieldList = BetterTable(className = "field-table").apply {
+        setStyle("word-break", "break-word")
         height = 100.perc
     }
 
@@ -146,6 +148,7 @@ class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNod
                     }
 
                     fun addBoth() {
+                        removeAll()
                         if (mobile) {
                             add(leftTab)
                         } else {
@@ -169,58 +172,76 @@ class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNod
                         addBoth()
                     }
 
-                    selectedField.subscribe {
-                        if (it != null) {
-                            if (leftTab.getTabs().isEmpty()) {
-                                removeAll()
-                                addBoth()
+                    selectedField.subscribe { fieldNode ->
+                        leftTab.apply {
+                            getTabs().withIndex().reversed().forEach { (i, it) ->
+                                if (it.label == "Field Info") {
+                                    removeTab(i)
+                                }
                             }
-                            leftTab.apply {
+
+                            if (fieldNode != null) {
+                                if (leftTab.getTabs().isEmpty()) {
+                                    addBoth()
+                                }
+
                                 tab("Field Info") {
-                                    InfoViewer(it)
+                                    InfoViewer(fieldNode)
                                 }
                             }
                         }
                     }
 
-                    var methodInfo: Tab? = null
-                    var parameters: Tab? = null
-                    var localVariables: Tab? = null
+                    selectedMethod.subscribe { methodNode ->
+                        selectedParamOrLocal.setState(null)
+                        rightTab.apply {
 
-                    selectedMethod.subscribe {
-                        if (it != null) {
-                            if (rightTab.getTabs().isEmpty()) {
-                                removeAll()
-                                addBoth()
-                            }
-                            rightTab.apply {
-                                methodInfo?.let { removeTab(it) }
-                                tab("Method Info") {
-                                    InfoViewer(it)
-                                    methodInfo = this
+                            getTabs().withIndex().reversed().forEach { (i, it) ->
+                                if (it.label == "Method Info") {
+                                    removeTab(i)
                                 }
-                                parameters?.let { removeTab(it) }
+                                if (it.label == "Parameters") {
+                                    removeTab(i)
+                                }
+                                if (it.label == "Local Variables") {
+                                    removeTab(i)
+                                }
+                            }
+
+                            if (methodNode != null) {
+                                if (rightTab.getTabs().isEmpty()) {
+                                    addBoth()
+                                }
+
+                                tab("Method Info") {
+                                    InfoViewer(methodNode)
+                                }
                                 tab("Parameters") {
                                     div("todo")
-                                    parameters = this
                                 }
-                                localVariables?.let { removeTab(it) }
                                 tab("Local Variables") {
                                     div("todo")
-                                    localVariables = this
                                 }
                             }
                         }
                     }
 
-                    var paramInfo: Tab? = null
-                    selectedParamOrLocal.subscribe {
-                        if (it != null) {
-                            leftTab.apply {
-                                val varName = if (it is MethodNode.ParameterNode) "Parameter" else "Local"
-                                paramInfo?.let { removeTab(it) }
-                                paramInfo = tab("$varName Info") {
-                                    InfoViewer(it)
+                    selectedParamOrLocal.subscribe { memberNode ->
+                        leftTab.apply {
+                            getTabs().withIndex().reversed().forEach { (i, it) ->
+                                if (it.label == "Parameter Info") {
+                                    removeTab(i)
+                                }
+                                if (it.label == "Local Info") {
+                                    removeTab(i)
+                                }
+                            }
+
+                            if (memberNode != null) {
+                                val varName = if (memberNode is MethodNode.ParameterNode) "Parameter" else "Local"
+
+                                tab("$varName Info") {
+                                    InfoViewer(memberNode)
                                 }
                             }
                         }

@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs
+package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs
 
 import io.kvision.core.onClick
 import io.kvision.core.style
@@ -6,10 +6,10 @@ import io.kvision.html.div
 import io.kvision.panel.Direction
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.BetterTable
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.MappingViewer
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.FasterSplitPanel
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.classes.ClassContentViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
+import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes.ClassContentViewer
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
 
@@ -34,6 +34,7 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
     }
 
     val table = BetterTable("classes").also {
+        it.setStyle("word-break", "break-word")
         add(it)
     }
 

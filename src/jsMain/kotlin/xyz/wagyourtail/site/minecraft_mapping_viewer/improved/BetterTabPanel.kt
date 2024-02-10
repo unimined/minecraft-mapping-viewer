@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved
+package xyz.wagyourtail.site.minecraft_mapping_viewer.improved
 
 import io.kvision.core.Display
 import io.kvision.core.FlexDirection

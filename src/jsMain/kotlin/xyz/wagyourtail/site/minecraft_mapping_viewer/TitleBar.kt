@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2
+package xyz.wagyourtail.site.minecraft_mapping_viewer
 
 import io.kvision.core.BsBgColor
 import io.kvision.core.Display
@@ -20,8 +20,9 @@ import io.kvision.toolbar.toolbar
 import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
+import xyz.wagyourtail.site.minecraft_mapping_viewer.MinecraftMappingViewer
 
-class TitleBar(val app: App) : FlexPanel(justify = JustifyContent.SPACEBETWEEN, wrap = FlexWrap.WRAP, className = BsBgColor.BODYTERTIARY.className) {
+class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyContent.SPACEBETWEEN, wrap = FlexWrap.WRAP, className = BsBgColor.BODYTERTIARY.className) {
 
     init {
         flexBasis = auto
@@ -90,9 +91,6 @@ class TitleBar(val app: App) : FlexPanel(justify = JustifyContent.SPACEBETWEEN, 
                 )
             }
         }
-
-
-
 
     }
 

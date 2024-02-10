@@ -1,24 +1,20 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2
+package xyz.wagyourtail.site.minecraft_mapping_viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.logger
-import io.kvision.core.Display
-import io.kvision.core.FlexDirection
-import io.kvision.core.Overflow
-import io.kvision.core.style
 import io.kvision.html.div
 import io.kvision.panel.StackPanel
-import io.kvision.panel.tabPanel
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.BetterTabPanel
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.ClassViewer
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.ConstantGroupViewer
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.PackageViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.MinecraftMappingViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ConstantGroupViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.PackageViewer
 import xyz.wagyourtail.unimined.mapping.tree.MappingTree
 import kotlin.time.measureTime
 
-class MappingViewer(val app: App) : StackPanel() {
+class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
     init {
         width = 100.perc
         height = 100.perc
@@ -45,12 +41,12 @@ class MappingViewer(val app: App) : StackPanel() {
         mappings.subscribe {
             LOGGER.info { "Updating mappings view" }
             measureTime {
-                singleRender {
+                singleRenderAsync {
                     tabs.removeAll()
                     if (it == null) {
                         LOGGER.info { "No mappings loaded" }
                         activeChild = nothing
-                        return@singleRender
+                        return@singleRenderAsync
                     }
                     activeChild = tabs
                     if (it.packages.isNotEmpty()) {
@@ -68,7 +64,6 @@ class MappingViewer(val app: App) : StackPanel() {
                         constantsTab.update(it.constantGroups)
                         tabs.addTab("Constants", constantsTab)
                     }
-                    console.log(mappings.value)
                     LOGGER.info { "Done updating tabs" }
                 }
             }

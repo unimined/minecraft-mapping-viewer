@@ -45,7 +45,7 @@ kotlin {
                 outputFileName = "main.bundle.js"
             })
             runTask(Action {
-                sourceMaps = false
+                sourceMaps = true
                 devServer = KotlinWebpackConfig.DevServer(
                     open = false,
                     port = 3000,
@@ -54,7 +54,7 @@ kotlin {
                         "/kvsse/*" to "http://localhost:8080",
                         "/kvws/*" to mapOf("target" to "ws://localhost:8080", "ws" to true)
                     ),
-                    static = mutableListOf("${layout.buildDirectory.asFile.get()}/processedResources/js/main")
+                    static = mutableListOf("${layout.buildDirectory.asFile.get()}/processedResources/js/main"),
                 )
             })
             testTask(Action {
@@ -107,6 +107,7 @@ kotlin {
                 implementation("io.kvision:kvision-bootstrap-upload:$kvisionVersion")
                 implementation("io.kvision:kvision-toastify:$kvisionVersion")
                 implementation("io.kvision:kvision-fontawesome:$kvisionVersion")
+                implementation("io.kvision:kvision-tabulator:$kvisionVersion")
                 implementation("io.kvision:kvision-pace:$kvisionVersion")
                 implementation("io.kvision:kvision-tabulator:$kvisionVersion")
                 implementation("io.kvision:kvision-state:$kvisionVersion")

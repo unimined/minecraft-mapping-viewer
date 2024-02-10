@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.tabs.info
+package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.logger
@@ -10,7 +10,7 @@ import io.kvision.html.h5
 import io.kvision.panel.VPanel
 import io.kvision.utils.perc
 import io.kvision.utils.px
-import xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2.improved.BetterTable
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.ext.annotation.Annotation
 import xyz.wagyourtail.unimined.mapping.jvms.four.AccessFlag

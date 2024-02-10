@@ -1,4 +1,4 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.mmv2
+package xyz.wagyourtail.site.minecraft_mapping_viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.logger
@@ -16,12 +16,15 @@ import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.localStorage
+import kotlinx.browser.window
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
+import xyz.wagyourtail.site.minecraft_mapping_viewer.AppScope
+import xyz.wagyourtail.site.minecraft_mapping_viewer.MinecraftMappingViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.Model
 import xyz.wagyourtail.unimined.mapping.EnvType
 
-class Settings(val app: App) : Div(className = BsBgColor.BODYSECONDARY.className) {
+class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODYSECONDARY.className) {
     val LOGGER by KotlinLogging.logger()
     init {
         whiteSpace = WhiteSpace.NOWRAP
@@ -148,7 +151,9 @@ class Settings(val app: App) : Div(className = BsBgColor.BODYSECONDARY.className
         }
         selectedMappings.subscribe {
             if (updating.value) return@subscribe
-            value.setState(Triple(getEnv(), mcVersion.value ?: return@subscribe, it))
+            window.setTimeout({
+                value.setState(Triple(getEnv(), mcVersion.value ?: return@setTimeout, it))
+            }, 0)
         }
     }
 
@@ -161,7 +166,7 @@ class Settings(val app: App) : Div(className = BsBgColor.BODYSECONDARY.className
 
     fun updateAvailableMappings() {
         AppScope.launch {
-            LOGGER.info("requesting available mappings ${mcVersion.value}...")
+            LOGGER.info { "requesting available mappings ${mcVersion.value}..." }
             availableMappings.setState(Model.availableMappings(mcVersion.value ?: return@launch, getEnv()))
         }
     }
