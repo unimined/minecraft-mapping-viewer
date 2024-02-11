@@ -2,31 +2,164 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.logger
-import io.kvision.core.Overflow
-import io.kvision.html.Div
-import io.kvision.html.div
-import io.kvision.html.h4
-import io.kvision.html.h5
-import io.kvision.panel.VPanel
+import io.kvision.core.*
+import io.kvision.html.*
+import io.kvision.panel.*
 import io.kvision.utils.perc
 import io.kvision.utils.px
+import kotlinx.browser.window
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.ext.annotation.Annotation
 import xyz.wagyourtail.unimined.mapping.jvms.four.AccessFlag
+import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.FieldType
+import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.ObjectType
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.one.InternalName
 import xyz.wagyourtail.unimined.mapping.tree.MappingTree
 import xyz.wagyourtail.unimined.mapping.tree.node.*
+import xyz.wagyourtail.unimined.mapping.util.defaultedMapOf
 import xyz.wagyourtail.unimined.mapping.visitor.*
 import xyz.wagyourtail.unimined.mapping.visitor.delegate.*
 
+@JsModule("sanitize-html")
+@JsNonModule
+external fun sanitizeHtml(input: String, options: dynamic): String
+
 class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel() {
     val LOGGER by KotlinLogging.logger()
+
+    val nsTabs = tabPanel {}
+
+    val byNamespace = defaultedMapOf<Namespace, ByNamespaceData> { ns ->
+        ByNamespaceData().also {
+            nsTabs.tab(ns.name) {
+                add(it)
+            }
+        }
+    }
 
     init {
         width = 100.perc
         height = 100.perc
         overflow = Overflow.AUTO
+
+        when (baseNode) {
+            is ClassNode -> {
+                classExtra(baseNode)
+            }
+            is MethodNode -> {
+                methodExtra(baseNode)
+            }
+            is FieldNode -> {
+                fieldExtra(baseNode)
+            }
+        }
+    }
+
+    fun classExtra(classNode: ClassNode) {
+        div {
+            div {
+                for (name in classNode.root.namespaces) {
+                    val intName = classNode.getName(name) ?: continue
+                    byNamespace[name].extra.apply {
+                        div {
+                            +"Internal Name: "
+                            div(className = BsBgColor.DARKSUBTLE.className) {
+                                display = Display.INLINE
+                                style(pClass = PClass.HOVER) {
+                                    textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
+                                    cursor = Cursor.POINTER
+                                }
+                                span {
+                                    overflowX = Overflow.AUTO
+                                    code(intName.toString(), className = BsBgColor.DARKSUBTLE.className) {
+                                        padding = 2.px
+                                    }
+                                }
+                                icon("fas fa-copy")
+                                onClick {
+                                    window.navigator.clipboard.writeText(intName.toString())
+                                }
+                            }
+                        }
+
+                        div {
+                            +"Type: "
+                            val javaName = intName.toString().replace("/", ".").replace("$", ".")
+                            div(className = BsBgColor.DARKSUBTLE.className) {
+                                display = Display.INLINE
+                                style(pClass = PClass.HOVER) {
+                                    textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
+                                    cursor = Cursor.POINTER
+                                }
+                                span {
+                                    overflowX = Overflow.AUTO
+                                    code(javaName) {
+                                        padding = 2.px
+                                    }
+                                }
+                                icon("fas fa-copy")
+                                onClick {
+                                    window.navigator.clipboard.writeText(javaName)
+                                }
+                            }
+                        }
+
+                        div {
+                            +"AW: "
+                            div(className = BsBgColor.DARKSUBTLE.className) {
+                                display = Display.INLINE
+                                style(pClass = PClass.HOVER) {
+                                    textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
+                                    cursor = Cursor.POINTER
+                                }
+                                span {
+                                    overflowX = Overflow.AUTO
+                                    code("accessible\tclass\t${intName}") {
+                                        padding = 2.px
+                                    }
+                                }
+                                icon("fas fa-copy")
+                                onClick {
+                                    window.navigator.clipboard.writeText("accessible\tclass\t${intName}")
+                                }
+                            }
+                        }
+
+                        div {
+                            +"AT: "
+                            val javaName = intName.toString().replace("/", ".")
+                            div(className = BsBgColor.DARKSUBTLE.className) {
+                                display = Display.INLINE
+                                style(pClass = PClass.HOVER) {
+                                    textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
+                                    cursor = Cursor.POINTER
+                                }
+                                span {
+                                    overflowX = Overflow.AUTO
+                                    code("public\t$javaName") {
+                                        padding = 2.px
+                                    }
+                                }
+                                icon("fas fa-copy")
+                                onClick {
+                                    window.navigator.clipboard.writeText("public\t$javaName")
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    fun methodExtra(methodNode: MethodNode) {
+
+    }
+
+    fun fieldExtra(fieldNode: FieldNode) {
+
     }
 
     val signatures by lazy {
@@ -75,13 +208,6 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel() {
         }
     }
 
-    val comments by lazy {
-        div {
-            marginBottom = 5.px
-            h4("Comments")
-        }
-    }
-
     val exceptions by lazy {
         BetterTable("Exceptions").also {
             it.head.row {
@@ -97,7 +223,6 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel() {
             }
         }
     }
-
 
     val delegator = object : NullDelegator() {
 
@@ -148,11 +273,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel() {
 
         override fun visitComment(delegate: CommentParentVisitor<*>, values: Map<Namespace, String>): CommentVisitor? {
             for ((ns, comment) in values.entries.sortedBy { baseNode.root.namespaces.indexOf(it.key) }) {
-                comments.add(Div {
-                    marginBottom = 5.px
-                    h5(ns.name)
-                    div(comment)
-                })
+                byNamespace[ns].comments.add(p(sanitizeHtml(comment, null), rich = true))
             }
             return null
         }
@@ -203,6 +324,16 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel() {
         }
     }
 
+    inner class ByNamespaceData : Div() {
 
+        val comments = div(className = BsBorder.BORDERBOTTOM.className) {
+            marginBottom = 5.px
+        }
+
+        val extra = div(className = BsBorder.BORDERBOTTOM.className) {
+            marginBottom = 5.px
+        }
+
+    }
 
 }

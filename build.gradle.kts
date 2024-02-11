@@ -101,13 +101,14 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
+                implementation(npm("sanitize-html", "2.11.0"))
+
                 implementation("io.kvision:kvision:$kvisionVersion")
                 implementation("io.kvision:kvision-bootstrap:$kvisionVersion")
                 implementation("io.kvision:kvision-tom-select:$kvisionVersion")
                 implementation("io.kvision:kvision-bootstrap-upload:$kvisionVersion")
                 implementation("io.kvision:kvision-toastify:$kvisionVersion")
                 implementation("io.kvision:kvision-fontawesome:$kvisionVersion")
-                implementation("io.kvision:kvision-tabulator:$kvisionVersion")
                 implementation("io.kvision:kvision-pace:$kvisionVersion")
                 implementation("io.kvision:kvision-tabulator:$kvisionVersion")
                 implementation("io.kvision:kvision-state:$kvisionVersion")

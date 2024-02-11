@@ -1,35 +1,26 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes
 
-import io.kvision.core.Overflow
 import io.kvision.core.onClick
-import io.kvision.html.div
-import io.kvision.panel.*
+import io.kvision.html.Div
+import io.kvision.html.header
+import io.kvision.panel.Direction
+import io.kvision.panel.TabPosition
+import io.kvision.panel.tab
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
 import kotlinx.browser.window
-import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
-import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
-import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer
 import xyz.wagyourtail.unimined.mapping.jvms.ext.NameAndDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
 import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
 import xyz.wagyourtail.unimined.mapping.tree.node.FieldNode
-import xyz.wagyourtail.unimined.mapping.tree.node.MemberNode
 import xyz.wagyourtail.unimined.mapping.tree.node.MethodNode
 
-class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNode) : BetterTabPanel() {
-
-    init {
-        width = 100.perc
-        height = 100.perc
-    }
-
-    val classInfoTab = tab("Info") {
-        InfoViewer(classNode).also { add(it) }
-    }
+class ClassContentViewer(val classNode: ClassNode) : Div() {
 
     val methodList = BetterTable(className = "method-table").apply {
         setStyle("word-break", "break-word")
@@ -41,16 +32,85 @@ class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNod
         height = 100.perc
     }
 
-     val selectedField = ObservableValue<FieldNode?>(null)
-     val selectedMethod = ObservableValue<MethodNode?>(null)
+    val hasFields = classNode.fields.resolve().isNotEmpty()
+    val hasMethods = classNode.methods.resolve().isNotEmpty()
 
-     val selectedParamOrLocal = ObservableValue<MemberNode<*,*,*>?>(null)
+    val mobileFlag = window.isMobile()
+
+    val leftTabs = BetterTabPanel(tabPosition = TabPosition.LEFT) {
+        height = 100.perc
+    }
+
+    val rightTabs by lazy {
+        if (mobileFlag) leftTabs
+        else BetterTabPanel(tabPosition = TabPosition.RIGHT) {
+            height = 100.perc
+        }
+    }
+
+    val selectedField = ObservableValue<FieldNode?>(null)
+    val selectedMethod = ObservableValue(MethodData(null))
+
+    fun updateContent() {
+        singleRender {
+            removeAll()
+            if (leftTabs.getTabs().isNotEmpty() && rightTabs.getTabs().isNotEmpty() && !mobileFlag) {
+                add(FasterSplitPanel(direction = Direction.VERTICAL).apply {
+                    add(leftTabs)
+                    add(rightTabs)
+                })
+            } else if (leftTabs.getTabs().isNotEmpty()) {
+                add(leftTabs)
+            } else if (rightTabs.getTabs().isNotEmpty()) {
+                add(rightTabs)
+            } else {
+                add(Div("No content"))
+            }
+        }
+    }
+
+    fun selectField(field: FieldNode?) {
+        singleRender {
+            leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
+                if (it.label == "Field Info") {
+                    leftTabs.removeTab(i)
+                }
+            }
+            if (field != null) {
+            leftTabs.tab("Field Info") {
+                add(InfoViewer(field))
+            }
+                }
+            selectedField.setState(field)
+        }
+    }
+
+    fun selectMethod(method: MethodNode?) {
+        singleRender {
+            rightTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
+                if (it.label == "Method Info") {
+                    rightTabs.removeTab(i)
+                }
+            }
+            if (method != null) {
+                rightTabs.tab("Method Info") {
+                    add(InfoViewer(method))
+                }
+            }
+            selectedMethod.setState(MethodData(method))
+        }
+    }
 
     init {
+        selectedMethod.subscribe {
+            updateContent()
+        }
 
-        val hasFields = classNode.fields.resolve().isNotEmpty()
-       val hasMethods = classNode.methods.resolve().isNotEmpty()
+        selectedField.subscribe {
+            updateContent()
+        }
 
+        val classNode = classNode
         fieldList.head.row {
             for (ns in classNode.root.namespaces) {
                 header(ns.name)
@@ -62,16 +122,12 @@ class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNod
         for (field in classNode.fields.resolve()) {
             fieldBody.row(data = field) {
                 for (name in classNode.root.namespaces) {
-                    cell(field.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), field.getDescriptor(name)).value } ?: "-") {
-                        onClick {
-                            selectedField.setState(field)
-                        }
-                    }
+                    cell(field.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), field.getDescriptor(name)).value } ?: "-")
                 }
             }
         }
         fieldList.activeRow.subscribe {
-            selectedField.setState(it as FieldNode?)
+            selectField(it as FieldNode?)
         }
 
         methodList.head.row {
@@ -89,168 +145,154 @@ class ClassContentViewer(val parentElement: ClassViewer, val classNode: ClassNod
             }
         }
         methodList.activeRow.subscribe {
-            selectedMethod.setState(it as MethodNode?)
+            selectMethod(it as MethodNode?)
         }
 
-        if (hasFields || hasMethods) {
-            tab("Content") {
-                if (window.isMobile()) {
-                    BetterTabPanel {
-                        if (hasMethods) {
-                            tab("Methods") {
-                                div("methods") {
-                                    width = 100.perc
-                                }
-                            }
-                        }
-                        if (hasFields) {
-                            tab("Fields") {
-                                div("fields") {
-                                    width = 100.perc
-                                }
-                            }
-                        }
-                    }.also {
-                        add(it)
-                    }
-                } else {
-
-                    val leftTab = BetterTabPanel(tabPosition = TabPosition.LEFT) {
-                        height = 100.perc
-
-                        if (hasMethods) {
-                            tab("Methods") {
-                                div {
-                                    height = 100.perc
-                                    overflow = Overflow.AUTO
-
-                                    add(methodList)
-                                }
-                            }
-                        }
-                    }
-
-                    val mobile = window.isMobile()
-
-                    val rightTab = (if (mobile) leftTab else BetterTabPanel(tabPosition = TabPosition.RIGHT)).apply {
-                        height = 100.perc
-
-                        if (hasFields) {
-                            tab("Fields") {
-                                div {
-                                    height = 100.perc
-                                    overflow = Overflow.AUTO
-
-                                    add(fieldList)
-                                }
-                            }
-                        }
-                    }
-
-                    fun addBoth() {
-                        removeAll()
-                        if (mobile) {
-                            add(leftTab)
-                        } else {
-                            FasterSplitPanel(direction = Direction.VERTICAL, className = "class-content-split") {
-                                height = 100.perc
-                                minSize = 100
-
-                                add(leftTab)
-                                add(rightTab)
-                            }.also {
-                                add(it)
-                            }
-                        }
-                    }
-
-                    if (leftTab.getTabs().isEmpty()) {
-                        add(rightTab)
-                    } else if (rightTab.getTabs().isEmpty()) {
-                        add(leftTab)
-                    } else {
-                        addBoth()
-                    }
-
-                    selectedField.subscribe { fieldNode ->
-                        leftTab.apply {
-                            getTabs().withIndex().reversed().forEach { (i, it) ->
-                                if (it.label == "Field Info") {
-                                    removeTab(i)
-                                }
-                            }
-
-                            if (fieldNode != null) {
-                                if (leftTab.getTabs().isEmpty()) {
-                                    addBoth()
-                                }
-
-                                tab("Field Info") {
-                                    InfoViewer(fieldNode)
-                                }
-                            }
-                        }
-                    }
-
-                    selectedMethod.subscribe { methodNode ->
-                        selectedParamOrLocal.setState(null)
-                        rightTab.apply {
-
-                            getTabs().withIndex().reversed().forEach { (i, it) ->
-                                if (it.label == "Method Info") {
-                                    removeTab(i)
-                                }
-                                if (it.label == "Parameters") {
-                                    removeTab(i)
-                                }
-                                if (it.label == "Local Variables") {
-                                    removeTab(i)
-                                }
-                            }
-
-                            if (methodNode != null) {
-                                if (rightTab.getTabs().isEmpty()) {
-                                    addBoth()
-                                }
-
-                                tab("Method Info") {
-                                    InfoViewer(methodNode)
-                                }
-                                tab("Parameters") {
-                                    div("todo")
-                                }
-                                tab("Local Variables") {
-                                    div("todo")
-                                }
-                            }
-                        }
-                    }
-
-                    selectedParamOrLocal.subscribe { memberNode ->
-                        leftTab.apply {
-                            getTabs().withIndex().reversed().forEach { (i, it) ->
-                                if (it.label == "Parameter Info") {
-                                    removeTab(i)
-                                }
-                                if (it.label == "Local Info") {
-                                    removeTab(i)
-                                }
-                            }
-
-                            if (memberNode != null) {
-                                val varName = if (memberNode is MethodNode.ParameterNode) "Parameter" else "Local"
-
-                                tab("$varName Info") {
-                                    InfoViewer(memberNode)
-                                }
-                            }
-                        }
-                    }
-                }
+        if (hasFields) {
+            rightTabs.tab("Fields") {
+                add(this@ClassContentViewer.fieldList)
             }
         }
 
+        if (hasMethods) {
+            leftTabs.tab("Methods") {
+                add(this@ClassContentViewer.methodList)
+            }
+        }
+
+        updateContent()
     }
 
+
+    inner class MethodData(val method: MethodNode?) {
+
+        val paramList = BetterTable(className = "params-table").apply {
+            setStyle("word-break", "break-word")
+            height = 100.perc
+        }
+
+        val localList = BetterTable(className = "locals-table").apply {
+            setStyle("word-break", "break-word")
+            height = 100.perc
+        }
+
+        val selectedParam = ObservableValue<MethodNode.ParameterNode?>(null)
+        val selectedLocal = ObservableValue<MethodNode.LocalNode?>(null)
+
+        val hasParams = method?.params?.isNotEmpty() ?: false
+        val hasLocals = method?.locals?.isNotEmpty() ?: false
+
+        fun selectParam(param: MethodNode.ParameterNode?) {
+            singleRender {
+                leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
+                    if (it.label == "Param Info") {
+                        leftTabs.removeTab(i)
+                    }
+                }
+                if (param != null) {
+                    leftTabs.tab("Param Info") {
+                        add(InfoViewer(param))
+                    }
+                }
+                selectedParam.setState(param)
+            }
+        }
+
+        fun selectLocal(local: MethodNode.LocalNode?) {
+            singleRender {
+                leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
+                    if (it.label == "Local Info") {
+                        leftTabs.removeTab(i)
+                    }
+                }
+                if (local != null) {
+                    leftTabs.tab("Local Info") {
+                        add(InfoViewer(local))
+                    }
+                }
+                selectedLocal.setState(local)
+            }
+        }
+
+        init {
+            selectParam(null)
+            selectLocal(null)
+
+            rightTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
+                if (it.label == "Parameters") {
+                    rightTabs.removeTab(i)
+                }
+                if (it.label == "Local Vars") {
+                    rightTabs.removeTab(i)
+                }
+            }
+
+            val method = method
+            if (method != null && (hasParams || hasLocals)) properInit()
+        }
+
+        private fun properInit() {
+            val method = method!!
+
+            paramList.head.row {
+                header("Index")
+                header("LvOrd")
+                for (ns in method.root.namespaces) {
+                    header(ns.name)
+                }
+            }
+
+            val paramBody = paramList.body {}
+            for (param in method.params) {
+                paramBody.row(data = param) {
+                    cell(param.index?.toString() ?: "-")
+                    cell(param.lvOrd?.toString() ?: "-")
+                    for (name in method.root.namespaces) {
+                        cell(param.names[name] ?: "-")
+                    }
+                }
+            }
+            paramList.activeRow.subscribe {
+                selectParam(it as MethodNode.ParameterNode?)
+            }
+
+            localList.head.row {
+                header("LvOrd")
+                header("StartOp")
+                for (ns in method.root.namespaces) {
+                    header(ns.name)
+                }
+            }
+            val localBody = localList.body {}
+            for (local in method.locals) {
+                localBody.row(data = local) {
+                    cell(local.lvOrd?.toString() ?: "-")
+                    cell(local.startOp?.toString() ?: "-")
+                    for (name in method.root.namespaces) {
+                        cell(local.names[name] ?: "-")
+                    }
+                }
+            }
+
+            localList.activeRow.subscribe {
+                selectLocal(it as MethodNode.LocalNode?)
+            }
+
+            if (hasParams) {
+                rightTabs.tab("Parameters") {
+                    add(paramList)
+                }
+            }
+
+            if (hasLocals) {
+                rightTabs.tab("Local Vars") {
+                    add(localList)
+                }
+            }
+
+            updateContent()
+        }
+
+    }
 
 }
