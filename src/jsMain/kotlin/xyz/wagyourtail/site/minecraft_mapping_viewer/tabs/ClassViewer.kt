@@ -49,11 +49,11 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
         }
 
         selectedClass.subscribe {
-            removeAll()
-            if (it == null) {
-                add(nothing)
-            } else {
-                singleRender {
+            singleRender {
+                removeAll()
+                if (it == null) {
+                    add(nothing)
+                } else {
                     add(ClassDataViewer(this@ClassViewer, it))
                 }
             }
