@@ -4,7 +4,6 @@ import io.kvision.core.*
 import io.kvision.html.CustomTag
 import io.kvision.html.div
 import io.kvision.state.ObservableValue
-import io.kvision.table.Row
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.document
@@ -12,7 +11,6 @@ import kotlinx.browser.window
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.MouseEvent
-import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 
 class BetterTable(className: String? = null, val selectRow: Boolean = true) : CustomTag("table", className = className + " table table-bordered table-striped table-hover") {
 
@@ -26,7 +24,7 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
         }
 
         fun row(init: BetterTableRow.() -> Unit) {
-            val row = this@BetterTable.BetterTableRow(null).also {
+            val row = this@BetterTable.BetterTableRow().also {
                 this.add(it)
             }
             row.init()
@@ -37,7 +35,7 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
     inner class BetterTableBody : CustomTag("tbody") {
 
         fun row(className: String? = null, data: Any? = null, init: BetterTableRow.() -> Unit): BetterTableRow {
-            val row = this@BetterTable.BetterTableRow(this, data, className).also {
+            val row = this@BetterTable.BetterTableRow(data, className).also {
                 this.add(it)
             }
             row.init()
@@ -46,13 +44,13 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
 
     }
 
-    inner class BetterTableRow(val body: BetterTableBody?, val data: Any? = null, className: String? = null) : CustomTag("tr", className = className) {
+    inner class BetterTableRow(val data: Any? = null, className: String? = null) : CustomTag("tr", className = className) {
 
         init {
-            if (body != null) {
+            if (this@BetterTable.selectRow) {
                 onClick {
                     singleRender {
-                        for (child in body!!.getChildren()) {
+                        for (child in this@BetterTable.getChildren().filterIsInstance<BetterTableBody>().flatMap { (it as Container).getChildren() }) {
                             child.removeCssClass("table-active")
                         }
                         addCssClass("table-active")
@@ -64,6 +62,7 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
 
         inner class BetterTableHeadCell(value: String) : CustomTag("th") {
             init {
+                setAttribute("scope", "col")
                 position = Position.RELATIVE
                 +(value)
             }

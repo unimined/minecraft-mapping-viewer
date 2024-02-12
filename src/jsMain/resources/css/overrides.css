@@ -5,3 +5,16 @@
 .splitpanel-vertical {
     overflow: hidden!important;
 }
+
+.small-horizontal-scrollbar::-webkit-scrollbar {
+    height: 6px;
+}
+
+.small-horizontal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--bs-secondary-bg-rgb));
+    border-radius: 10px;
+}
+
+.small-horizontal-scrollbar::-webkit-scrollbar-track {
+    background-color: rgba(var(--bs-tertiary-bg-rgb));
+}

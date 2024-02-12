@@ -40,35 +40,66 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
     init {
         mappings.subscribe {
             LOGGER.info { "Updating mappings view" }
+            app.titlebar.typeahead.input.tomSelectJs?.clearOptions()
             measureTime {
                 singleRenderAsync {
                     tabs.removeAll()
-                    if (it == null) {
-                        LOGGER.info { "No mappings loaded" }
-                        activeChild = nothing
-                        return@singleRenderAsync
-                    }
                     activeChild = tabs
-                    if (it.packages.isNotEmpty()) {
-                        LOGGER.info { "Updating packages tab" }
-                        packagesTab.update(it.packages)
+
+                    LOGGER.info { "Updating packages tab" }
+                    packagesTab.update(it?.packages ?: emptySet())
+                    if (it?.packages?.isNotEmpty() == true) {
                         tabs.addTab("Packages", packagesTab)
                     }
-                    if (it.classes.isNotEmpty()) {
-                        LOGGER.info { "Updating classes tab" }
-                        classesTab.update(it.namespaces, it.classes)
+
+                    LOGGER.info { "Updating classes tab" }
+                    classesTab.update(
+                        it?.namespaces ?: emptyList(),
+                        it?.filterByQuery(
+                            app.titlebar.typeahead.value ?: "",
+                            SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
+                        ) ?: emptySet()
+                    )
+                    if (it?.classes?.isNotEmpty() == true) {
                         tabs.addTab("Classes", classesTab)
                     }
-                    if (it.constantGroups.isNotEmpty()) {
-                        LOGGER.info { "Updating constants tab" }
-                        constantsTab.update(it.constantGroups)
+
+                    LOGGER.info { "Updating constants tab" }
+                    constantsTab.update(it?.constantGroups ?: emptySet())
+                    if (it?.constantGroups?.isNotEmpty() == true) {
                         tabs.addTab("Constants", constantsTab)
                     }
                     LOGGER.info { "Done updating tabs" }
+
+                    if (it == null || (it.packages.isEmpty() && it.classes.isEmpty() && it.constantGroups.isEmpty())) {
+                        LOGGER.info { "Mappings are empty!" }
+                        activeChild = nothing
+                    }
+
                 }
             }
         }.also {
             LOGGER.info { "finished updating in $it" }
+        }
+
+        var prevQuery: Pair<SearchType, String>? = null
+        app.titlebar.typeahead.subscribe {
+            val type = SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
+            val query = it ?: ""
+            if (prevQuery == type to query) return@subscribe
+            prevQuery = type to query
+            LOGGER.info { "Updating classes tab for query: $it" }
+            measureTime {
+                classesTab.update(
+                    mappings.value?.namespaces ?: emptyList(),
+                    mappings.value?.filterByQuery(
+                        query,
+                        type
+                    ) ?: emptySet()
+                )
+            }.also {
+                LOGGER.info { "finished updating in $it" }
+            }
         }
     }
 

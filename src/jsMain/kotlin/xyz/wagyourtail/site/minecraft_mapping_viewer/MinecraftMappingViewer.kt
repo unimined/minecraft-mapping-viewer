@@ -14,10 +14,7 @@ import io.kvision.pace.Pace
 import io.kvision.panel.*
 import io.kvision.state.ObservableValue
 import io.kvision.theme.ThemeManager
-import io.kvision.utils.auto
-import io.kvision.utils.perc
-import io.kvision.utils.px
-import io.kvision.utils.vh
+import io.kvision.utils.*
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,8 +73,8 @@ class MinecraftMappingViewer : Application() {
 
     val windowSize = ObservableValue(0 to 0)
 
-    var baseMappings: Pair<Set<String>, MappingTree>? = null
-    var patches = mutableMapOf<Pair<String, String>, MappingTree>()
+    var baseMappings: Pair<Set<String>, String>? = null
+    var patches = mutableMapOf<Pair<String, String>, String>()
 
     override fun start(state: Map<String, Any>) {
         window.addEventListener("resize", {
@@ -147,18 +144,23 @@ class MinecraftMappingViewer : Application() {
                             gridTemplateColumns = "auto auto"
 
                             div {
+                                marginLeft = 10.px
                                 paddingRight = 5.px
 
                                 link("", url = "https://github.com/unimined/minecraft-mapping-viewer") {
+                                    setAttribute("aria-label", "Github")
+
                                     target = "_blank"
                                     icon("fa-brands fa-github")
                                 }
                             }
                         }
 
-                        h5("Wagyourtail 2024") {
+                        div("Wagyourtail 2024") {
+                            fontSize = 1.rem
                             marginTop = 5.px
                             marginBottom = 5.px
+                            marginRight = 10.px
                         }
                     }
                 }
@@ -181,16 +183,11 @@ class MinecraftMappingViewer : Application() {
                     measureTime {
                         prevMc = mc
                         LOGGER.info { "requesting base mappings $env $mcVers (${required})..." }
-                        Buffer().use { buf ->
-                            buf.writeUtf8(
-                                Model.requestBaseMappings(
-                                    mcVers,
-                                    env,
-                                    required.toList()
-                                )
-                            )
-                            baseMappings = required to UMFReader.read(buf)
-                        }
+                        baseMappings = required to Model.requestBaseMappings(
+                            mcVers,
+                            env,
+                            required.toList()
+                        )
                     }.also {
                         LOGGER.info { "base mappings received in $it" }
                     }
@@ -206,17 +203,12 @@ class MinecraftMappingViewer : Application() {
                         val version = entry.value ?: return@mapNotNull null
                         if (mappings to version in patches) return@mapNotNull null
                         count++
-                        Buffer().use {
-                            it.writeUtf8(
-                                Model.requestMappingPatch(
-                                    mcVers,
-                                    env,
-                                    mappings,
-                                    version
-                                )
-                            )
-                            mappings to version to UMFReader.read(it)
-                        }
+                        mappings to version to  Model.requestMappingPatch(
+                            mcVers,
+                            env,
+                            mappings,
+                            version
+                        )
                     }
                     for (entry in newPatches) {
                         patches[entry.first] = entry.second
@@ -228,20 +220,15 @@ class MinecraftMappingViewer : Application() {
                 val mergedMappings = MappingTree()
                 LOGGER.info { "applying base mappings" }
                 measureTime {
-                    baseMappings?.second?.accept(mergedMappings) ?: error("Failed to apply, base mappings not found")
+                    baseMappings?.second?.let { UMFReader.read(env, it, mergedMappings) } ?: error("Failed to apply, base mappings not found")
                 }.also {
                     LOGGER.info { "base mappings applied in $it" }
                 }
                 for (patchId in selected.filter { it.value != null }.map { it.key to it.value }) {
                     LOGGER.info { "applying patch \"$patchId\"" }
                     measureTime {
-                        patches[patchId]?.accept(mergedMappings) ?: error("Failed to apply, patch $patchId not found")
-                        LOGGER.debug {
-                            Buffer().use {
-                                patches[patchId]?.accept(UMFWriter.write(it))
-                                it.readUtf8()
-                            }
-                        }
+                        patches[patchId]?.let { UMFReader.read(env, it, mergedMappings) } ?: error("Failed to apply, patch $patchId not found")
+                        LOGGER.debug { patches[patchId] }
                     }.also {
                         LOGGER.info { "patch \"$patchId\" applied in $it" }
                     }

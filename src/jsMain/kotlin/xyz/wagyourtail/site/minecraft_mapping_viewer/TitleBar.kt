@@ -1,9 +1,7 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer
 
-import io.kvision.core.BsBgColor
-import io.kvision.core.Display
-import io.kvision.core.FlexWrap
-import io.kvision.core.JustifyContent
+import io.kvision.core.*
+import io.kvision.form.select.SelectInput
 import io.kvision.form.select.TomSelectCallbacks
 import io.kvision.form.select.selectInput
 import io.kvision.form.text.TomTypeahead
@@ -12,6 +10,7 @@ import io.kvision.html.button
 import io.kvision.html.div
 import io.kvision.html.h1
 import io.kvision.panel.FlexPanel
+import io.kvision.panel.flexPanel
 import io.kvision.panel.hPanel
 import io.kvision.state.ObservableValue
 import io.kvision.theme.themeSwitcher
@@ -35,22 +34,39 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
 
     val settingsVisible = ObservableValue(false)
 
+    val searchType = SelectInput(
+        options = SearchType.entries.map { it.name to it.displayName },
+        value = SearchType.KEYWORD.name
+    ) {
+        setAttribute("aria-label", "Search Type")
+    }
+
     val typeahead = TomTypeahead {
         width = 300.px
         marginBottom = 0.px
         autocomplete = Autocomplete.OFF
+
+        input.setAttribute("aria-label", "Search Box")
 
         tsCallbacks = TomSelectCallbacks(
             shouldLoad = { query ->
                 query.length >= 3
             },
             load = { query, callback ->
-                callback(listOf("todo").toTypedArray())
-            }
+                //app.mappingViewer.mappings.value.getAutocompleteResults(query, searchType.value)
+                callback(emptyArray())
+            },
         )
+
+        searchType.subscribe {
+            input.tomSelectJs?.clearOptions()
+
+            // re-trigger typeahead's subscribers
+            setValue(value)
+        }
     }
 
-    val rightGroup = hPanel {
+    val rightGroup = flexPanel(wrap = FlexWrap.WRAP) {
         paddingTop = 10.px
 
         toolbar {
@@ -69,26 +85,27 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
             }
         }
 
-        div {
-            paddingRight = 10.px
-            add(typeahead)
-        }
+        flexPanel(wrap = FlexWrap.WRAP) {
+            div {
+                paddingRight = 10.px
+                add(typeahead)
+            }
 
-        div {
-            paddingRight = 10.px
-            hPanel {
+            div {
+                paddingRight = 10.px
+                hPanel {
 
-                button("", icon = "fas fa-search") {
-                    marginRight = 10.px
-                    onClick {
-                        typeahead.setState(typeahead.value)
+                    button("", icon = "fas fa-search") {
+                        setAttribute("aria-label", "Search Button")
+
+                        marginRight = 10.px
+                        onClick {
+                            typeahead.setState(typeahead.value)
+                        }
                     }
-                }
 
-                selectInput(
-                    options = SearchType.entries.map { it.name to it.displayName },
-                    value = SearchType.KEYWORD.name
-                )
+                    add(searchType)
+                }
             }
         }
 

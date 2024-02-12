@@ -1,7 +1,9 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes
 
+import io.kvision.core.Overflow
 import io.kvision.core.onClick
 import io.kvision.html.Div
+import io.kvision.html.div
 import io.kvision.html.header
 import io.kvision.panel.Direction
 import io.kvision.panel.TabPosition
@@ -20,16 +22,18 @@ import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
 import xyz.wagyourtail.unimined.mapping.tree.node.FieldNode
 import xyz.wagyourtail.unimined.mapping.tree.node.MethodNode
 
-class ClassContentViewer(val classNode: ClassNode) : Div() {
+class ClassContentViewer(classNode: ClassNode) : Div() {
+
+    init {
+        height = 100.perc
+    }
 
     val methodList = BetterTable(className = "method-table").apply {
         setStyle("word-break", "break-word")
-        height = 100.perc
     }
 
     val fieldList = BetterTable(className = "field-table").apply {
         setStyle("word-break", "break-word")
-        height = 100.perc
     }
 
     val hasFields = classNode.fields.resolve().isNotEmpty()
@@ -56,6 +60,8 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
             removeAll()
             if (leftTabs.getTabs().isNotEmpty() && rightTabs.getTabs().isNotEmpty() && !mobileFlag) {
                 add(FasterSplitPanel(direction = Direction.VERTICAL).apply {
+                    height = 100.perc
+
                     add(leftTabs)
                     add(rightTabs)
                 })
@@ -71,6 +77,7 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
 
     fun selectField(field: FieldNode?) {
         singleRender {
+            val activeTabName = leftTabs.activeTab?.label
             leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
                 if (it.label == "Field Info") {
                     leftTabs.removeTab(i)
@@ -82,11 +89,13 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
             }
                 }
             selectedField.setState(field)
+            leftTabs.activeTab = leftTabs.getTabs().firstOrNull { it.label == activeTabName } ?: leftTabs.activeTab
         }
     }
 
     fun selectMethod(method: MethodNode?) {
         singleRender {
+            val activeTabName = rightTabs.activeTab?.label
             rightTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
                 if (it.label == "Method Info") {
                     rightTabs.removeTab(i)
@@ -98,6 +107,7 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
                 }
             }
             selectedMethod.setState(MethodData(method))
+            rightTabs.activeTab = rightTabs.getTabs().firstOrNull { it.label == activeTabName } ?: rightTabs.activeTab
         }
     }
 
@@ -150,13 +160,23 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
 
         if (hasFields) {
             rightTabs.tab("Fields") {
-                add(this@ClassContentViewer.fieldList)
+                div {
+                    height = 100.perc
+                    overflow = Overflow.AUTO
+
+                    add(this@ClassContentViewer.fieldList)
+                }
             }
         }
 
         if (hasMethods) {
             leftTabs.tab("Methods") {
-                add(this@ClassContentViewer.methodList)
+                div {
+                    height = 100.perc
+                    overflow = Overflow.AUTO
+
+                    add(this@ClassContentViewer.methodList)
+                }
             }
         }
 
@@ -168,12 +188,10 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
 
         val paramList = BetterTable(className = "params-table").apply {
             setStyle("word-break", "break-word")
-            height = 100.perc
         }
 
         val localList = BetterTable(className = "locals-table").apply {
             setStyle("word-break", "break-word")
-            height = 100.perc
         }
 
         val selectedParam = ObservableValue<MethodNode.ParameterNode?>(null)
@@ -184,6 +202,7 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
 
         fun selectParam(param: MethodNode.ParameterNode?) {
             singleRender {
+                val activeTabName = leftTabs.activeTab?.label
                 leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
                     if (it.label == "Param Info") {
                         leftTabs.removeTab(i)
@@ -195,11 +214,13 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
                     }
                 }
                 selectedParam.setState(param)
+                leftTabs.activeTab = leftTabs.getTabs().firstOrNull { it.label == activeTabName } ?: leftTabs.activeTab
             }
         }
 
         fun selectLocal(local: MethodNode.LocalNode?) {
             singleRender {
+                val activeTabName = rightTabs.activeTab?.label
                 leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
                     if (it.label == "Local Info") {
                         leftTabs.removeTab(i)
@@ -211,6 +232,7 @@ class ClassContentViewer(val classNode: ClassNode) : Div() {
                     }
                 }
                 selectedLocal.setState(local)
+                rightTabs.activeTab = rightTabs.getTabs().firstOrNull { it.label == activeTabName } ?: rightTabs.activeTab
             }
         }
 
