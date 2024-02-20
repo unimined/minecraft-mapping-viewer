@@ -3,6 +3,7 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer.improved
 import io.kvision.core.*
 import io.kvision.panel.SimplePanel
 import io.kvision.utils.perc
+import kotlinx.browser.window
 
 class VirtualScrollWrapper<T: SimplePanel>(
     private val scrollElement: SimplePanel,
@@ -67,12 +68,12 @@ class VirtualScrollWrapper<T: SimplePanel>(
                         i++
                     }
                     firstIndex = i
-                    updateContent(h, offsetHeight.toFloat())
+                    updateContent(h, window.innerHeight.toFloat())
                 }
             }
         }
 
-        updateContent(0f, 100f)
+        updateContent(0f, window.innerHeight.toFloat())
     }
 
 }
