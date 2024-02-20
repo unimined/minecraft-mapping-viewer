@@ -137,7 +137,9 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             }
         }
         fieldList.activeRow.subscribe {
-            selectField(it as FieldNode?)
+            if (it is FieldNode?) {
+                selectField(it)
+            }
         }
 
         methodList.head.row {
@@ -155,7 +157,9 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             }
         }
         methodList.activeRow.subscribe {
-            selectMethod(it as MethodNode?)
+            if (it is MethodNode?) {
+                selectMethod(it)
+            }
         }
 
         if (hasFields) {
@@ -275,7 +279,9 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
                 }
             }
             paramList.activeRow.subscribe {
-                selectParam(it as MethodNode.ParameterNode?)
+                if (it is MethodNode.ParameterNode?) {
+                    selectParam(it)
+                }
             }
 
             localList.head.row {
@@ -297,7 +303,9 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             }
 
             localList.activeRow.subscribe {
-                selectLocal(it as MethodNode.LocalNode?)
+                if (it is MethodNode.LocalNode?) {
+                    selectLocal(it)
+                }
             }
 
             if (hasParams) {
