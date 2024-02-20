@@ -58,7 +58,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                         it?.filterByQuery(
                             app.titlebar.typeahead.value ?: "",
                             SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
-                        ) ?: emptySet()
+                        )?.toList() ?: emptyList()
                     )
                     if (it?.classes?.isNotEmpty() == true) {
                         tabs.addTab("Classes", classesTab)
@@ -95,7 +95,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                     mappings.value?.filterByQuery(
                         query,
                         type
-                    ) ?: emptySet()
+                    )?.toList() ?: emptyList()
                 )
             }.also {
                 LOGGER.info { "finished updating in $it" }

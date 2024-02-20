@@ -1,5 +1,6 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs
 
+import io.kvision.core.Overflow
 import io.kvision.core.style
 import io.kvision.html.div
 import io.kvision.panel.Direction
@@ -8,6 +9,7 @@ import io.kvision.utils.perc
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.VirtualScrollWrapper
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes.ClassDataViewer
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
@@ -32,9 +34,15 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
 
     }
 
+    val tableContainer = div {
+        width = 100.perc
+        height = 100.perc
+        overflow = Overflow.AUTO
+    }
+
     val table = BetterTable("classes").also {
         it.setStyle("word-break", "break-word")
-        add(it)
+        tableContainer.add(it)
     }
 
     val selectedClass = ObservableValue<ClassNode?>(null)
@@ -60,7 +68,10 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
         }
     }
 
-    fun update(namespaces: List<Namespace>, classList: Set<ClassNode>) {
+    var body: VirtualScrollWrapper<BetterTable.BetterTableBody>? = null
+        private set
+
+    fun update(namespaces: List<Namespace>, classList: List<ClassNode>) {
         table.removeContent()
         selectedClass.setState(null)
         table.head.row {
@@ -68,16 +79,21 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
                 header(ns.name)
             }
         }
-        var body: BetterTable.BetterTableBody? = null
-        for ((i, c) in classList.withIndex()) {
-            if (i % 100 == 0) {
-                body = table.body {
-                    addCssClass("cls-body")
-                }
-            }
-            body!!.row(className = "cls-row", data = c) {
+
+        val tbody = table.body {  }
+
+        body = VirtualScrollWrapper(
+            tableContainer,
+            tbody,
+            tbody.row {  },
+            tbody.row {  },
+            41f,
+            classList.size
+        ) { index ->
+            val cls = classList[index]
+            row(data = cls) {
                 for (ns in namespaces) {
-                    cell(c.getName(ns)?.toString() ?: "-")
+                    cell(cls.getName(ns)?.value ?: "-")
                 }
             }
         }
