@@ -5,6 +5,7 @@ import io.kvision.html.CustomTag
 import io.kvision.html.div
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
+import io.kvision.utils.plus
 import io.kvision.utils.px
 import kotlinx.browser.document
 import kotlinx.browser.window
@@ -80,27 +81,29 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
                     background = Background(Color.name(Col.LIGHTGRAY))
                 }
 
+                var x: Int = 0
+                var width: Double = 0.0
+
+                val mouseMoveHandler: (Event?) -> Unit = {
+                    if (it != null && it is MouseEvent) {
+                        val delta = it.clientX - x
+                        this@BetterTableHeadCell.width = CssSize(width + delta, UNIT.px)
+                    }
+                }
+
                 onEvent {
                     mousedown = { event ->
-                        val x = event.clientX
-                        val width = window.getComputedStyle((event.target as HTMLElement).parentElement!!).width.removeSuffix("px").toFloat()
-
-                        val mouseMoveHandler: (Event) -> dynamic = {
-                            val delta = (it as MouseEvent).clientX - x
-                            ((event.target as HTMLElement).parentElement as HTMLElement).style.width = "${width + delta}px"
-                            Unit
+                        if (event.target != null && event.target is HTMLElement) {
+                            x = event.clientX
+                            width = (event.target as HTMLElement).parentElement!!.getBoundingClientRect().width
+                            document.addEventListener("mousemove", mouseMoveHandler)
                         }
-                        var mouseUpHandler: ((Event) -> dynamic)? = null
-                        mouseUpHandler = {
-                            document.removeEventListener("mousemove", mouseMoveHandler)
-                            document.removeEventListener("mouseup", mouseUpHandler)
-                        }
-
-                        document.addEventListener("mousemove", mouseMoveHandler)
-                        document.addEventListener("mouseup", mouseUpHandler)
                     }
-                    drag
                 }
+
+                document.addEventListener("mouseup", {
+                    document.removeEventListener("mousemove", mouseMoveHandler)
+                })
             }
 
         }

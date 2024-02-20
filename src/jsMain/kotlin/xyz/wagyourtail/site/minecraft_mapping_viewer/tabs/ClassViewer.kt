@@ -99,7 +99,9 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
         }
 
         table.activeRow.subscribe {
-            selectedClass.setState(it as ClassNode?)
+            if (it is ClassNode?) {
+                selectedClass.setState(it)
+            }
         }
 
     }
