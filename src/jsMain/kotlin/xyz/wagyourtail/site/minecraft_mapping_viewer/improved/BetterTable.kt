@@ -99,11 +99,10 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
                             document.addEventListener("mousemove", mouseMoveHandler)
                         }
                     }
+                    mouseup = {
+                        document.removeEventListener("mousemove", mouseMoveHandler)
+                    }
                 }
-
-                document.addEventListener("mouseup", {
-                    document.removeEventListener("mousemove", mouseMoveHandler)
-                })
             }
 
         }

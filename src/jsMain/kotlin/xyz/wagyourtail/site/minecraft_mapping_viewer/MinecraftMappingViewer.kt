@@ -6,10 +6,7 @@ import io.github.oshai.kotlinlogging.Level
 import io.github.oshai.kotlinlogging.logger
 import io.kvision.*
 import io.kvision.core.*
-import io.kvision.html.div
-import io.kvision.html.h5
-import io.kvision.html.icon
-import io.kvision.html.link
+import io.kvision.html.*
 import io.kvision.pace.Pace
 import io.kvision.panel.*
 import io.kvision.state.ObservableValue
@@ -27,9 +24,11 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.Settings
 import xyz.wagyourtail.site.minecraft_mapping_viewer.TitleBar
 import xyz.wagyourtail.unimined.mapping.EnvType
+import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFReader
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFWriter
 import xyz.wagyourtail.unimined.mapping.tree.MappingTree
+import xyz.wagyourtail.unimined.mapping.visitor.delegate.nsFiltered
 import kotlin.time.measureTime
 
 val ENABLE_DEBUG = false
@@ -73,7 +72,7 @@ class MinecraftMappingViewer : Application() {
 
     val windowSize = ObservableValue(0 to 0)
 
-    var baseMappings: Pair<Set<String>, String>? = null
+    var baseMappings: String? = null
     var patches = mutableMapOf<Pair<String, String>, String>()
 
     override fun start(state: Map<String, Any>) {
@@ -141,7 +140,7 @@ class MinecraftMappingViewer : Application() {
 
                         gridPanel(alignItems = AlignItems.CENTER) {
                             height = 100.perc
-                            gridTemplateColumns = "auto auto"
+                            gridTemplateColumns = "auto auto auto"
 
                             div {
                                 marginLeft = 10.px
@@ -152,6 +151,56 @@ class MinecraftMappingViewer : Application() {
 
                                     target = "_blank"
                                     icon("fa-brands fa-github")
+                                }
+
+                                link("", url = "https://discord.gg/P6W58J8") {
+                                    marginLeft = 5.px
+                                    setAttribute("aria-label", "Discord")
+
+                                    target = "_blank"
+                                    icon("fa-brands fa-discord")
+                                }
+                            }
+
+                            div {
+                                height = 90.perc
+                                width = 1.px
+                                background = Background(Color.name(Col.GRAY))
+                            }
+
+                            div {
+                                link("", url = "https://ko-fi.com/wagyourtail") {
+                                    marginLeft = 5.px
+                                    setAttribute("aria-label", "Ko-fi")
+
+                                    target = "_blank"
+//                                    image("/image/ko-fi.svg", alt = "Ko-fi") {
+//                                        height = 24.px
+//                                        paddingBottom = 4.px
+//                                    }
+                                    customTag("svg") {
+                                        setAttribute("height", "20")
+                                        setAttribute("width", "20")
+                                        setAttribute("viewBox", "0 0 24 24")
+                                        setAttribute("role", "img")
+                                        setAttribute("xmlns", "http://www.w3.org/2000/svg")
+                                        setStyle("fill", "rgba(var(--bs-link-color-rgb)")
+                                        marginBottom = 4.px
+                                        style(pClass = PClass.HOVER) {
+                                            setStyle("fill", "rgba(var(--bs-link-hover-color-rgb)")
+                                        }
+                                        customTag("path") {
+                                            setAttribute("d", "M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.965-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 3.011.723 4.311zm6.173.478c-.928.116-1.682.028-1.682.028V7.284h1.77s1.971.551 1.971 2.638c0 1.913-.985 2.667-2.059 3.015z")
+                                        }
+                                    }
+                                }
+
+                                link("", url = "https://patreon.com/wagyourtail") {
+                                    marginLeft = 5.px
+                                    setAttribute("aria-label", "Patreon")
+
+                                    target = "_blank"
+                                    icon("fa-brands fa-patreon")
                                 }
                             }
                         }
@@ -173,20 +222,23 @@ class MinecraftMappingViewer : Application() {
             if (data == null) return@subscribe
             val (env, mcVers, selected) = data
             inc++
+
+            mappingViewer.loading.setState(true)
+            mappingViewer.mappings.setState(null)
+
             AppScope.launch {
                 LOGGER.info { "selected mappings changed ($inc): $selected" }
                 val base = baseMappings
                 val required = selected.filter { it.value == null }.keys
                 val mc = env to mcVers
                 Pace.start()
-                if (prevMc != mc || base == null || !base.first.containsAll(required)) {
+                if (prevMc != mc || base == null) {
                     measureTime {
                         prevMc = mc
-                        LOGGER.info { "requesting base mappings $env $mcVers (${required})..." }
-                        baseMappings = required to Model.requestBaseMappings(
+                        LOGGER.info { "requesting base mappings $env $mcVers..." }
+                        baseMappings = Model.requestBaseMappings(
                             mcVers,
-                            env,
-                            required.toList()
+                            env
                         )
                     }.also {
                         LOGGER.info { "base mappings received in $it" }
@@ -195,9 +247,19 @@ class MinecraftMappingViewer : Application() {
                     patches.clear()
                 }
 
+                val mergedMappings = MappingTree()
+                val selectedMappings = selected.keys.flatMap { settings.availableMappings.value!![it]!!.let { listOf(it.srcNs) + it.dstNs } }.map { Namespace(it) }.toSet()
+                LOGGER.info { "applying base mappings" }
+                measureTime {
+                    baseMappings?.let { UMFReader.read(env, it, mergedMappings, mergedMappings.nsFiltered(selectedMappings)) } ?: error("Failed to apply, base mappings not found")
+                }.also {
+                    LOGGER.info { "base mappings applied in $it" }
+                }
+
                 LOGGER.info { "requesting patches..." }
                 var count = 0
                 measureTime {
+                    // TODO: only remove mappings that are actually in the base mappings by checking the ns's in mergedMappings
                     val newPatches = selected.filter { it.value != null }.mapNotNull { entry ->
                         val mappings = entry.key
                         val version = entry.value ?: return@mapNotNull null
@@ -217,17 +279,10 @@ class MinecraftMappingViewer : Application() {
                     LOGGER.info { "$count new patches received in $it" }
                 }
 
-                val mergedMappings = MappingTree()
-                LOGGER.info { "applying base mappings" }
-                measureTime {
-                    baseMappings?.second?.let { UMFReader.read(env, it, mergedMappings) } ?: error("Failed to apply, base mappings not found")
-                }.also {
-                    LOGGER.info { "base mappings applied in $it" }
-                }
                 for (patchId in selected.filter { it.value != null }.map { it.key to it.value }) {
                     LOGGER.info { "applying patch \"$patchId\"" }
                     measureTime {
-                        patches[patchId]?.let { UMFReader.read(env, it, mergedMappings) } ?: error("Failed to apply, patch $patchId not found")
+                        patches[patchId]?.let { UMFReader.read(env, it, mergedMappings, mergedMappings.nsFiltered(selectedMappings)) } ?: error("Failed to apply, patch $patchId not found")
                         LOGGER.debug { patches[patchId] }
                     }.also {
                         LOGGER.info { "patch \"$patchId\" applied in $it" }
@@ -241,6 +296,7 @@ class MinecraftMappingViewer : Application() {
                 }
 
                 mappingViewer.mappings.setState(mergedMappings)
+                mappingViewer.loading.setState(false)
             }
         }
     }

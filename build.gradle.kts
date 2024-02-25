@@ -45,7 +45,6 @@ kotlin {
                 outputFileName = "main.bundle.js"
             })
             runTask(Action {
-                sourceMaps = true
                 devServer = KotlinWebpackConfig.DevServer(
                     open = false,
                     port = 3000,
@@ -87,8 +86,10 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-server-auth:$ktorVersion")
                 implementation("io.ktor:ktor-server-compression:$ktorVersion")
+
                 implementation("io.ktor:ktor-client-apache5:$ktorVersion")
                 implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
                 implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
             }

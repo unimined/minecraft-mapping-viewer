@@ -6,7 +6,6 @@ if (config.devServer) {
     config.devServer.compress = false; // workaround for SSE
     config.devServer.host = "0.0.0.0"
     config.devServer.allowedHosts = "all"
-    config.devtool = 'eval-cheap-source-map';
 } else {
     config.devtool = undefined;
 }

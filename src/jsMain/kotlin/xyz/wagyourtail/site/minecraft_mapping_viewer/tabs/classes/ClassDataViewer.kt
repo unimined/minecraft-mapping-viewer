@@ -39,7 +39,7 @@ class ClassDataViewer(val parentElement: ClassViewer, val classNode: ClassNode) 
 
     val classContentTab = ClassContentViewer(classNode).also {
         if (it.hasFields || it.hasMethods) {
-            tab("Content") {
+            activeTab = tab("Content") {
                 add(it)
             }
         } else {

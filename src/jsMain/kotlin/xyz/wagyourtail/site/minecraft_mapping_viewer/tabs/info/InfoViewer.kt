@@ -702,22 +702,22 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
         val tree = MappingTree()
         when (baseNode) {
             is ClassNode -> {
-                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), false)
+                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), tree.namespaces, false)
             }
             is MethodNode -> {
-                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), false)
+                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), tree.namespaces, false)
             }
             is FieldNode -> {
-                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), false)
+                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), tree.namespaces, false)
             }
             is MethodNode.ParameterNode -> {
-                baseNode.acceptInner(DelegateParameterVisitor(MethodNode.ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), false)
+                baseNode.acceptInner(DelegateParameterVisitor(MethodNode.ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), tree.namespaces, false)
             }
             is MethodNode.LocalNode -> {
-                baseNode.acceptInner(DelegateLocalVariableVisitor(MethodNode.LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), false)
+                baseNode.acceptInner(DelegateLocalVariableVisitor(MethodNode.LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), tree.namespaces, false)
             }
             is PackageNode -> {
-                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), false)
+                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), tree.namespaces, false)
             }
             else -> {
                 LOGGER.warn { "Unknown node type: ${baseNode::class.simpleName}" }
