@@ -95,7 +95,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
                     LOGGER.info { "Updating classes tab" }
                     classesTab.update(
-                        it?.namespaces ?: emptyList(),
+                        app.settings.selectedMappingNs.value,
                         it?.filterByQuery(
                             app.titlebar.typeahead.value ?: "",
                             SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")

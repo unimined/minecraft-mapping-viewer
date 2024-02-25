@@ -86,6 +86,7 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-server-auth:$ktorVersion")
                 implementation("io.ktor:ktor-server-compression:$ktorVersion")
+                implementation("io.ktor:ktor-server-caching-headers:$ktorVersion")
 
                 implementation("io.ktor:ktor-client-apache5:$ktorVersion")
                 implementation("ch.qos.logback:logback-classic:$logbackVersion")

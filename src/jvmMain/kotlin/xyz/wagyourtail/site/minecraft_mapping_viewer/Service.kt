@@ -18,22 +18,24 @@ import kotlin.time.toJavaDuration
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 actual class MappingService : IMappingService {
 
-    private val minecraftVersions: LauncherMeta by ExpiringDelegate {
-        runBlocking {
-            val resp = MMV_HTTP_CLIENT.get("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json")
-            if (resp.status != HttpStatusCode.OK) throw Exception("Failed to get versions")
-            LauncherMeta(Json.parseToJsonElement(resp.bodyAsText()).jsonObject)
+    companion object {
+        val minecraftVersions: LauncherMeta by ExpiringDelegate {
+            runBlocking {
+                val resp = MMV_HTTP_CLIENT.get("https://launchermeta.mojang.com/mc/game/version_manifest_v2.json")
+                if (resp.status != HttpStatusCode.OK) throw Exception("Failed to get versions")
+                LauncherMeta(Json.parseToJsonElement(resp.bodyAsText()).jsonObject)
+            }
         }
-    }
 
-    private val versionProviders = Caffeine.newBuilder()
-        .expireAfterAccess(1.days.toJavaDuration())
-        .softValues()
-        .build<Pair<String, EnvType>, MappingVersionData> { (id, env) ->
-            minecraftVersions.versions.firstOrNull { it.id == id }?.let {
-                MappingVersionData(it, env)
-            } ?: throw IllegalArgumentException("Invalid version")
-        }
+        private val versionProviders = Caffeine.newBuilder()
+            .expireAfterAccess(1.days.toJavaDuration())
+            .softValues()
+            .build<Pair<String, EnvType>, MappingVersionData> { (id, env) ->
+                minecraftVersions.versions.firstOrNull { it.id == id }?.let {
+                    MappingVersionData(it, env)
+                } ?: throw IllegalArgumentException("Invalid version")
+            }
+    }
 
     override suspend fun requestVersions(): List<Pair<String, Boolean>> {
         return minecraftVersions.versions.map { it.id to (it.type == "release") }

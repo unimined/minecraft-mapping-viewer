@@ -21,6 +21,7 @@ import kotlinx.browser.window
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
 import xyz.wagyourtail.unimined.mapping.EnvType
+import xyz.wagyourtail.unimined.mapping.Namespace
 
 class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODYSECONDARY.className) {
     val LOGGER by KotlinLogging.logger()
@@ -69,6 +70,7 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
 
     val updating = ObservableValue(false)
     private val selectedMappings = ObservableValue<Map<String, String?>>(emptyMap())
+    val selectedMappingNs = ObservableValue<List<Namespace>>(emptyList())
 
     val value = ObservableValue<Triple<EnvType, String, Map<String, String?>>?>(null)
 
@@ -151,7 +153,8 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
             }
         }
         var changed = false
-        selectedMappings.subscribe {
+        selectedMappings.subscribe { map ->
+            selectedMappingNs.setState(listOf(Namespace("official")) + map.keys.flatMap { availableMappings.value!![it]!!.dstNs }.map { Namespace(it) })
             if (updating.value) return@subscribe
             if (app.titlebar.settingsVisible.value && window.isMobile()) {
                 if (!changed) {
@@ -160,7 +163,7 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
                 }
                 return@subscribe
             }
-            value.setState(Triple(getEnv(), mcVersion.value ?: return@subscribe, it))
+            value.setState(Triple(getEnv(), mcVersion.value ?: return@subscribe, map))
         }
         app.titlebar.settingsVisible.subscribe {
             if (!it && window.isMobile() && changed) {

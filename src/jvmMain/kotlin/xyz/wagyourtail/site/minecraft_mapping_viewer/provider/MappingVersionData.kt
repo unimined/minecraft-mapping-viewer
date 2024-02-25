@@ -8,6 +8,7 @@ import okio.sink
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingInfo
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.IntermediaryProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.MojmapProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.YarnProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.MCVersion
@@ -31,7 +32,8 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
 
         val providers = listOf(
             IntermediaryProvider,
-            YarnProvider
+            YarnProvider,
+            MojmapProvider,
         ).associateBy { it.mappingId }
 
     }
@@ -65,7 +67,7 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
                     val tree = resolver.resolve()
 
                     cacheFile.sink().buffer().use {
-                        tree.accept(UMFWriter.write(env, it), tree.namespaces, true)
+                        tree.accept(UMFWriter.write(env, it), (setOf(resolver.unmappedNs) + tree.namespaces).toList(), true)
                     }
                 }
             }.apply {

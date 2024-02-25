@@ -16,30 +16,36 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer
+import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.ext.NameAndDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
 import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
 import xyz.wagyourtail.unimined.mapping.tree.node.FieldNode
 import xyz.wagyourtail.unimined.mapping.tree.node.MethodNode
 
-class ClassContentViewer(classNode: ClassNode) : Div() {
+class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) : Div() {
 
     init {
         height = 100.perc
     }
 
+    val mobileFlag = window.isMobile()
+
     val methodList = BetterTable(className = "method-table").apply {
-        setStyle("word-break", "break-word")
+        if (!this@ClassContentViewer.mobileFlag) {
+            setStyle("word-break", "break-word")
+        }
     }
 
     val fieldList = BetterTable(className = "field-table").apply {
-        setStyle("word-break", "break-word")
+        if (!this@ClassContentViewer.mobileFlag) {
+            setStyle("word-break", "break-word")
+        }
     }
 
     val hasFields = classNode.fields.resolve().isNotEmpty()
     val hasMethods = classNode.methods.resolve().isNotEmpty()
 
-    val mobileFlag = window.isMobile()
 
     val leftTabs = BetterTabPanel(tabPosition = TabPosition.LEFT) {
         height = 100.perc
@@ -85,7 +91,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             }
             if (field != null) {
             leftTabs.tab("Field Info") {
-                add(InfoViewer(field))
+                add(InfoViewer(this@ClassContentViewer.namespaces, field))
             }
                 }
             selectedField.setState(field)
@@ -103,7 +109,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             }
             if (method != null) {
                 rightTabs.tab("Method Info") {
-                    add(InfoViewer(method))
+                    add(InfoViewer(this@ClassContentViewer.namespaces, method))
                 }
             }
             selectedMethod.setState(MethodData(method))
@@ -122,7 +128,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
 
         val classNode = classNode
         fieldList.head.row {
-            for (ns in classNode.root.namespaces) {
+            for (ns in this@ClassContentViewer.namespaces) {
                 header(ns.name)
             }
         }
@@ -131,7 +137,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
         val fieldBody = fieldList.body {}
         for (field in classNode.fields.resolve()) {
             fieldBody.row(data = field) {
-                for (name in classNode.root.namespaces) {
+                for (name in this@ClassContentViewer.namespaces) {
                     cell(field.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), field.getDescriptor(name)).value } ?: "-")
                 }
             }
@@ -143,7 +149,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
         }
 
         methodList.head.row {
-            for (ns in classNode.root.namespaces) {
+            for (ns in this@ClassContentViewer.namespaces) {
                 header(ns.name)
             }
         }
@@ -151,7 +157,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
         val methodBody = methodList.body {}
         for (method in classNode.methods.resolve()) {
             methodBody.row(data = method) {
-                for (name in classNode.root.namespaces) {
+                for (name in this@ClassContentViewer.namespaces) {
                     cell(method.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), method.getDescriptor(name)).value } ?: "-")
                 }
             }
@@ -191,11 +197,15 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
     inner class MethodData(val method: MethodNode?) {
 
         val paramList = BetterTable(className = "params-table").apply {
-            setStyle("word-break", "break-word")
+            if (!window.isMobile()) {
+                setStyle("word-break", "break-word")
+            }
         }
 
         val localList = BetterTable(className = "locals-table").apply {
-            setStyle("word-break", "break-word")
+            if (!window.isMobile()) {
+                setStyle("word-break", "break-word")
+            }
         }
 
         val selectedParam = ObservableValue<MethodNode.ParameterNode?>(null)
@@ -214,7 +224,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
                 }
                 if (param != null) {
                     leftTabs.tab("Param Info") {
-                        add(InfoViewer(param))
+                        add(InfoViewer(this@ClassContentViewer.namespaces, param))
                     }
                 }
                 selectedParam.setState(param)
@@ -232,7 +242,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
                 }
                 if (local != null) {
                     leftTabs.tab("Local Info") {
-                        add(InfoViewer(local))
+                        add(InfoViewer(this@ClassContentViewer.namespaces, local))
                     }
                 }
                 selectedLocal.setState(local)
@@ -263,7 +273,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             paramList.head.row {
                 header("Index")
                 header("LvOrd")
-                for (ns in method.root.namespaces) {
+                for (ns in this@ClassContentViewer.namespaces) {
                     header(ns.name)
                 }
             }
@@ -273,7 +283,7 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
                 paramBody.row(data = param) {
                     cell(param.index?.toString() ?: "-")
                     cell(param.lvOrd?.toString() ?: "-")
-                    for (name in method.root.namespaces) {
+                    for (name in this@ClassContentViewer.namespaces) {
                         cell(param.names[name] ?: "-")
                     }
                 }
@@ -287,16 +297,16 @@ class ClassContentViewer(classNode: ClassNode) : Div() {
             localList.head.row {
                 header("LvOrd")
                 header("StartOp")
-                for (ns in method.root.namespaces) {
+                for (ns in this@ClassContentViewer.namespaces) {
                     header(ns.name)
                 }
             }
             val localBody = localList.body {}
             for (local in method.locals) {
                 localBody.row(data = local) {
-                    cell(local.lvOrd?.toString() ?: "-")
+                    cell(local.lvOrd.toString() ?: "-")
                     cell(local.startOp?.toString() ?: "-")
-                    for (name in method.root.namespaces) {
+                    for (name in this@ClassContentViewer.namespaces) {
                         cell(local.names[name] ?: "-")
                     }
                 }

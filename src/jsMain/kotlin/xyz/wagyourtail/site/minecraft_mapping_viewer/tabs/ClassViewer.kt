@@ -6,10 +6,12 @@ import io.kvision.html.div
 import io.kvision.panel.Direction
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
+import kotlinx.browser.window
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.VirtualScrollWrapper
+import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes.ClassDataViewer
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
@@ -41,7 +43,9 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
     }
 
     val table = BetterTable("classes").also {
-        it.setStyle("word-break", "break-word")
+        if (!window.isMobile()) {
+            it.setStyle("word-break", "break-word")
+        }
         tableContainer.add(it)
     }
 

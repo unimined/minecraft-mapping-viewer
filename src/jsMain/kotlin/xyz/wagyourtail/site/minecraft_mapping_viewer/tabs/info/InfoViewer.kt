@@ -34,7 +34,7 @@ import xyz.wagyourtail.unimined.mapping.visitor.delegate.*
 @JsNonModule
 external fun sanitizeHtml(input: String, options: dynamic): String
 
-class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer") {
+class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer") {
     val LOGGER by KotlinLogging.logger()
 
     companion object {
@@ -517,7 +517,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
     }
 
     fun classExtra(classNode: ClassNode) {
-        for (name in classNode.root.namespaces) {
+        for (name in namespaces) {
             val intName = classNode.getName(name) ?: continue
             byNamespace[name].extra.apply {
                 className(intName)
@@ -531,7 +531,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
     }
 
     fun methodExtra(methodNode: MethodNode) {
-        for (name in methodNode.root.namespaces) {
+        for (name in namespaces) {
             val intName = methodNode.getName(name) ?: continue
             byNamespace[name].extra.apply {
                 val cName = (methodNode.parent as ClassNode).getName(name) ?: return@apply
@@ -547,7 +547,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
     }
 
     fun fieldExtra(fieldNode: FieldNode) {
-        for (name in fieldNode.root.namespaces) {
+        for (name in namespaces) {
             val intName = fieldNode.getName(name) ?: continue
             byNamespace[name].extra.apply {
                 val cName = (fieldNode.parent as ClassNode).getName(name) ?: return@apply
@@ -566,7 +566,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
     val signatures by lazy {
         BetterTable("Signatures").also {
             it.head.row {
-                for (ns in baseNode.root.namespaces) {
+                for (ns in namespaces) {
                     header(ns.name)
                 }
             }
@@ -633,7 +633,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
         ): SignatureVisitor? {
             val body = signatures.firstBody ?: signatures.body {}
             body.row {
-                for (ns in baseNode.root.namespaces) {
+                for (ns in namespaces) {
                     cell(values[ns] ?: "-")
                 }
             }
@@ -673,7 +673,7 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
         }
 
         override fun visitComment(delegate: CommentParentVisitor<*>, values: Map<Namespace, String>): CommentVisitor? {
-            for ((ns, comment) in values.entries.sortedBy { baseNode.root.namespaces.indexOf(it.key) }) {
+            for ((ns, comment) in values.entries.sortedBy { namespaces.indexOf(it.key) }) {
                 byNamespace[ns].comments.add(p(sanitizeHtml(comment, null), rich = true))
             }
             return null
@@ -702,22 +702,22 @@ class InfoViewer(val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer
         val tree = MappingTree()
         when (baseNode) {
             is ClassNode -> {
-                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), tree.namespaces, false)
+                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), namespaces, false)
             }
             is MethodNode -> {
-                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), tree.namespaces, false)
+                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), namespaces, false)
             }
             is FieldNode -> {
-                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), tree.namespaces, false)
+                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), namespaces, false)
             }
             is MethodNode.ParameterNode -> {
-                baseNode.acceptInner(DelegateParameterVisitor(MethodNode.ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), tree.namespaces, false)
+                baseNode.acceptInner(DelegateParameterVisitor(MethodNode.ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces, false)
             }
             is MethodNode.LocalNode -> {
-                baseNode.acceptInner(DelegateLocalVariableVisitor(MethodNode.LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), tree.namespaces, false)
+                baseNode.acceptInner(DelegateLocalVariableVisitor(MethodNode.LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces, false)
             }
             is PackageNode -> {
-                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), tree.namespaces, false)
+                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), namespaces, false)
             }
             else -> {
                 LOGGER.warn { "Unknown node type: ${baseNode::class.simpleName}" }
