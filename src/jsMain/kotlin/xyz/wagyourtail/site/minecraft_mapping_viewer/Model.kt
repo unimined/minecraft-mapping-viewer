@@ -4,4 +4,6 @@ import io.kvision.remote.getService
 
 object Model : IMappingService by getService<IMappingService>() {
 
+
+
 }
