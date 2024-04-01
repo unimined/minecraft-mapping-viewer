@@ -1,9 +1,11 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer
 
-import io.kvision.core.*
+import io.kvision.core.BsBgColor
+import io.kvision.core.Display
+import io.kvision.core.FlexWrap
+import io.kvision.core.JustifyContent
 import io.kvision.form.select.SelectInput
 import io.kvision.form.select.TomSelectCallbacks
-import io.kvision.form.select.selectInput
 import io.kvision.form.text.TomTypeahead
 import io.kvision.html.Autocomplete
 import io.kvision.html.button
@@ -19,7 +21,6 @@ import io.kvision.toolbar.toolbar
 import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
-import xyz.wagyourtail.site.minecraft_mapping_viewer.MinecraftMappingViewer
 
 class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyContent.SPACEBETWEEN, wrap = FlexWrap.WRAP, className = BsBgColor.BODYTERTIARY.className) {
 

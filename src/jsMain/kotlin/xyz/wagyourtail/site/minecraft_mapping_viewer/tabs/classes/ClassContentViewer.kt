@@ -1,10 +1,8 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes
 
 import io.kvision.core.Overflow
-import io.kvision.core.onClick
 import io.kvision.html.Div
 import io.kvision.html.div
-import io.kvision.html.header
 import io.kvision.panel.Direction
 import io.kvision.panel.TabPosition
 import io.kvision.panel.tab
@@ -19,9 +17,9 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.ext.NameAndDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
-import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
-import xyz.wagyourtail.unimined.mapping.tree.node.FieldNode
-import xyz.wagyourtail.unimined.mapping.tree.node.MethodNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.FieldNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.MethodNode
 
 class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) : Div() {
 
@@ -90,10 +88,10 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
                 }
             }
             if (field != null) {
-            leftTabs.tab("Field Info") {
-                add(InfoViewer(this@ClassContentViewer.namespaces, field))
-            }
+                leftTabs.tab("Field Info") {
+                    add(InfoViewer(this@ClassContentViewer.namespaces, field))
                 }
+            }
             selectedField.setState(field)
             leftTabs.activeTab = leftTabs.getTabs().firstOrNull { it.label == activeTabName } ?: leftTabs.activeTab
         }
@@ -126,16 +124,20 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
             updateContent()
         }
 
-        val classNode = classNode
         fieldList.head.row {
             for (ns in this@ClassContentViewer.namespaces) {
                 header(ns.name)
             }
         }
 
-
         val fieldBody = fieldList.body {}
-        for (field in classNode.fields.resolve()) {
+        val fields = classNode.fields.resolve()
+        for (field in fields) {
+            // doesn't have descriptor, and is already shown by one that does
+            if (!field.hasDescriptor() && fields.any {
+                    it.hasDescriptor() &&
+                    it.names.keys.intersect(field.names.keys).let { nss -> nss.isNotEmpty() && nss.all { ns -> field.names[ns] == it.names[ns] }}
+            }) continue
             fieldBody.row(data = field) {
                 for (name in this@ClassContentViewer.namespaces) {
                     cell(field.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), field.getDescriptor(name)).value } ?: "-")

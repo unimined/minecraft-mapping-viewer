@@ -1,16 +1,13 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl
+package xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.mojmap
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.*
-import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okio.buffer
@@ -19,11 +16,9 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingService
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
-import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
-import xyz.wagyourtail.unimined.mapping.visitor.delegate.renest
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.time.measureTime
@@ -49,19 +44,19 @@ object MojmapProvider : MappingPatchProvider("mojmap") {
         }
 
     override fun availableVersions(mcVersion: String, env: EnvType): List<String>? {
-        return if (env != EnvType.SERVER) {
-            if (availableVersions[mcVersion]?.first != null) {
+        if (env != EnvType.JOINED) return emptyList()
+        return if (availableVersions[mcVersion]?.first != null) {
                 null
             } else {
                 emptyList()
             }
-        } else {
-            if (availableVersions[mcVersion]?.second != null) {
-                null
-            } else {
-                emptyList()
-            }
-        }
+//        } else {
+//            if (availableVersions[mcVersion]?.second != null) {
+//                null
+//            } else {
+//                emptyList()
+//            }
+//        }
     }
 
     override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {

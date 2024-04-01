@@ -7,22 +7,19 @@ import io.kvision.panel.Direction
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
 import kotlinx.browser.window
-import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingViewer
+import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.FasterSplitPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.VirtualScrollWrapper
 import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes.ClassDataViewer
 import xyz.wagyourtail.unimined.mapping.Namespace
-import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
+import xyz.wagyourtail.unimined.mapping.jvms.four.two.one.InternalName
+import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
 
 class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Direction.HORIZONTAL) {
     companion object {
         init {
-            style(".cls-body") {
-                setStyle("content-visibility", "auto")
-                setStyle("contain-intrinsic-height", "auto 410px")
-            }
             style(".cls-row") {
                 setStyle("content-visibility", "auto")
                 setStyle("contain-intrinsic-height", "auto 41px")
@@ -75,8 +72,9 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
     var body: VirtualScrollWrapper<BetterTable.BetterTableBody>? = null
         private set
 
-    fun update(namespaces: List<Namespace>, classList: List<ClassNode>) {
+    fun update(namespaces: List<Namespace>, classList: List<Pair<Map<Namespace, InternalName>, () -> ClassNode>>) {
         table.removeContent()
+        table.activeRow.clearSubscribers()
         selectedClass.setState(null)
         table.head.row {
             for (ns in namespaces) {
@@ -95,16 +93,18 @@ class ClassViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = Di
             classList.size
         ) { index ->
             val cls = classList[index]
-            row(data = cls) {
+            row(data = cls, className = "cls-row") {
                 for (ns in namespaces) {
-                    cell(cls.getName(ns)?.value ?: "-")
+                    cell(cls.first[ns]?.value ?: "-")
                 }
             }
         }
 
         table.activeRow.subscribe {
-            if (it is ClassNode?) {
-                selectedClass.setState(it)
+            if (it is Pair<*, *>?) {
+                val second = it?.second
+                if (second !is Function0<*>?) return@subscribe
+                selectedClass.setState(second?.invoke() as ClassNode?)
             }
         }
 

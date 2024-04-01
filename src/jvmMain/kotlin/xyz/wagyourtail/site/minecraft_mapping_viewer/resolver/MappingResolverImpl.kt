@@ -28,13 +28,6 @@ class MappingResolverImpl(
         return MappingResolverImpl(key, propogator)
     }
 
-//    override fun mcVersionCompare(a: String, b: String): Int {
-//        val aVer = minecraftVersions.versions.indexOfFirst { it.id == a }
-//        val bVer = minecraftVersions.versions.indexOfFirst { it.id == b }
-//        if (aVer == -1 || bVer == -1) throw IllegalArgumentException("Invalid Minecraft version")
-//        return aVer.compareTo(bVer)
-//    }
-
 
 
 }

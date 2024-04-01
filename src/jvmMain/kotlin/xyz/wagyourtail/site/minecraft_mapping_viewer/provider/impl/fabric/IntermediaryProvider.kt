@@ -1,12 +1,10 @@
-package xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl
+package xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.fabric
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.*
-import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -21,7 +19,6 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
-import xyz.wagyourtail.unimined.mapping.visitor.delegate.renest
 import kotlin.io.path.*
 import kotlin.time.measureTime
 
@@ -40,6 +37,7 @@ object IntermediaryProvider : MappingPatchProvider("intermediary") {
     }
 
     override fun availableVersions(mcVersion: String, env: EnvType): List<String>? {
+        if (env != EnvType.JOINED) return emptyList()
         return if (availableVersions.contains(mcVersion)) null else emptyList()
     }
 

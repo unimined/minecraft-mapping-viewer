@@ -35,6 +35,14 @@ actual class MappingService : IMappingService {
                     MappingVersionData(it, env)
                 } ?: throw IllegalArgumentException("Invalid version")
             }
+
+        fun mcVersionCompare(a: String, b: String): Int {
+            val aVer = minecraftVersions.versions.indexOfFirst { it.id == a }
+            val bVer = minecraftVersions.versions.indexOfFirst { it.id == b }
+            if (aVer == -1 || bVer == -1) throw IllegalArgumentException("Invalid Minecraft version")
+            return aVer.compareTo(bVer)
+        }
+
     }
 
     override suspend fun requestVersions(): List<Pair<String, Boolean>> {
@@ -45,15 +53,11 @@ actual class MappingService : IMappingService {
         return versionProviders[mcVersion to envType].availableMappings
     }
 
-    override suspend fun requestBaseMappings(mcVersion: String, envType: EnvType): String {
-        return versionProviders[mcVersion to envType].baseMappings
-    }
-
     override suspend fun requestMappingPatch(
         mcVersion: String,
         envType: EnvType,
         mapping: String,
-        version: String
+        version: String?
     ): String {
         return versionProviders[mcVersion to envType].mappingPatches[mapping to version]
     }

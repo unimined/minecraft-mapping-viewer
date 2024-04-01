@@ -34,7 +34,6 @@ open class BetterTabPanel(
         init {
             style(".container-fluid") {
                 height = 100.perc
-                overflow = Overflow.HIDDEN
             }
             style(".bettertabpanel > div") {
                 height = 100.perc

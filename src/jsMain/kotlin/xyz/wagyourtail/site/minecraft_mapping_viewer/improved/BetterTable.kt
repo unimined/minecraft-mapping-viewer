@@ -3,19 +3,16 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer.improved
 import io.kvision.core.*
 import io.kvision.html.CustomTag
 import io.kvision.html.div
-import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
-import io.kvision.utils.plus
 import io.kvision.utils.px
 import kotlinx.browser.document
-import kotlinx.browser.window
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.MouseEvent
 
 class BetterTable(className: String? = null, val selectRow: Boolean = true) : CustomTag("table", className = className + " table table-bordered table-striped table-hover") {
 
-    val activeRow = ObservableValue<Any?>(null)
+    val activeRow = ClearableObservableValue<Any?>(null)
 
     inner class BetterTableHead : CustomTag("thead") {
         init {

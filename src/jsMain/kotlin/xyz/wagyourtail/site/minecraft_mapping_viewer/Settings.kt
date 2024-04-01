@@ -95,16 +95,28 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
             updateVersions()
         }
         mcVersion.subscribe {
+            LOGGER.info { "mcVersion changed: $it (${mcVersionCompare(it ?: "", "1.2.5")})" }
+            if (mcVersionCompare(it ?: return@subscribe, "1.2.5") < 0) {
+                envType.setState(EnvType.JOINED.name)
+                envType.options = EnvType.entries.map { it.name to it.name }
+                envType.disabled = true
+            } else if (envType.value == EnvType.JOINED.name) {
+                envType.setState(EnvType.CLIENT.name)
+                envType.disabled = false
+                envType.options = (EnvType.entries - EnvType.JOINED).map { it.name to it.name }
+            }
             updateAvailableMappings()
         }
         envType.subscribe {
             updateAvailableMappings()
         }
         availableMappings.subscribe { avail ->
+            LOGGER.info { "updated available mappings: $avail" }
             mappingSelectList.removeAll()
             if (avail != null) {
                 singleRender {
                     updating.setState(true)
+                    selectedMappings.setState(emptyMap())
                     for ((mapping, info) in avail) {
                         if (info.versions?.isEmpty() != true) {
                             mappingSelectList.hPanel(alignItems = AlignItems.CENTER) {
@@ -148,13 +160,16 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
                         }
                     }
                 }
+                LOGGER.info { "updated settings panel" }
                 updating.setState(false)
                 selectedMappings.setState(selectedMappings.value)
             }
         }
         var changed = false
         selectedMappings.subscribe { map ->
-            selectedMappingNs.setState(listOf(Namespace("official")) + map.keys.flatMap { availableMappings.value!![it]!!.dstNs }.map { Namespace(it) })
+            LOGGER.info { "updated selected mappings: $map" }
+            selectedMappingNs.setState((listOf(Namespace("official")) + map.keys.mapNotNull { availableMappings.value!![it]?.dstNs }.flatten().map { Namespace(it) }).toSet().toList())
+            LOGGER.info { "updated selected mapping namespaces: ${selectedMappingNs.value}" }
             if (updating.value) return@subscribe
             if (app.titlebar.settingsVisible.value && window.isMobile()) {
                 if (!changed) {
@@ -172,6 +187,15 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
         }
     }
 
+
+    fun mcVersionCompare(a: String, b: String): Int {
+        val minecraftVersions = versions.value ?: return 0
+        val aVer = minecraftVersions.indexOfFirst { it.first == a }
+        val bVer = minecraftVersions.indexOfFirst { it.first == b }
+        if (aVer == -1 || bVer == -1) throw IllegalArgumentException("Invalid Minecraft version")
+        return aVer.compareTo(bVer)
+    }
+
     fun updateVersions() {
         mcVersion.options = versions.value?.filter { it.second || snapshots.value }?.map { it.first to it.first }
         if (mcVersion.value == null) {
@@ -182,6 +206,7 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
     fun updateAvailableMappings() {
         AppScope.launch {
             LOGGER.info { "requesting available mappings ${mcVersion.value}..." }
+            availableMappings.setState(emptyMap())
             availableMappings.setState(Model.availableMappings(mcVersion.value ?: return@launch, getEnv()))
         }
     }

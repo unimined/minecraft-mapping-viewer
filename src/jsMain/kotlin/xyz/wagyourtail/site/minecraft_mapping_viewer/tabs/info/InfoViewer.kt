@@ -9,23 +9,28 @@ import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.window
-import org.w3c.dom.Element
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
+import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer.Companion.className
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.ext.FieldOrMethodDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.ext.FullyQualifiedName
 import xyz.wagyourtail.unimined.mapping.jvms.ext.NameAndDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.ext.annotation.Annotation
 import xyz.wagyourtail.unimined.mapping.jvms.four.AccessFlag
-import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.FieldDescriptor
-import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.FieldType
 import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.ObjectType
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.one.InternalName
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
 import xyz.wagyourtail.unimined.mapping.tree.MappingTree
 import xyz.wagyourtail.unimined.mapping.tree.node.*
+import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.FieldNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.MethodNode
+import xyz.wagyourtail.unimined.mapping.tree.node._constant.ConstantGroupNode
+import xyz.wagyourtail.unimined.mapping.tree.node._constant.ConstantNode
+import xyz.wagyourtail.unimined.mapping.tree.node._constant.TargetNode
+import xyz.wagyourtail.unimined.mapping.tree.node._package.PackageNode
 import xyz.wagyourtail.unimined.mapping.util.defaultedMapOf
 import xyz.wagyourtail.unimined.mapping.visitor.*
 import xyz.wagyourtail.unimined.mapping.visitor.delegate.*
@@ -34,7 +39,7 @@ import xyz.wagyourtail.unimined.mapping.visitor.delegate.*
 @JsNonModule
 external fun sanitizeHtml(input: String, options: dynamic): String
 
-class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer") {
+open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) : VPanel(className = "info-viewer") {
     val LOGGER by KotlinLogging.logger()
 
     companion object {
@@ -42,6 +47,71 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
             style(".info-viewer > .container-fluid") {
                 height = auto
                 overflow = Overflow.INHERIT
+            }
+        }
+
+        fun Container.scrollCopyContainer(str: String) {
+            hPanel {
+                overflow = Overflow.HIDDEN
+                style(pClass = PClass.HOVER) {
+                    textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
+                    cursor = Cursor.POINTER
+                }
+
+
+                div(className = "small-horizontal-scrollbar") {
+                    overflowX = Overflow.AUTO
+                    overflowY = Overflow.HIDDEN
+                    whiteSpace = WhiteSpace.NOWRAP
+
+                    fun scroll(deltaY: Double) {
+                        val el = getElement()
+                        if (el != null) {
+                            el.scrollLeft += deltaY
+                        }
+                    }
+
+                    div(className = BsBgColor.DARKSUBTLE.className) {
+                        setStyle("user-select", "none")
+
+                        code(str, className = BsBgColor.DARKSUBTLE.className) {
+                            setStyle("user-select", "all")
+                            padding = 2.px
+
+                            onEvent {
+                                mousewheel = { event ->
+                                    event.preventDefault()
+                                    event.stopPropagation()
+                                    scroll(event.deltaY)
+                                }
+                            }
+                        }
+
+                        onEvent {
+                            mousewheel = { event ->
+                                event.preventDefault()
+                                event.stopPropagation()
+                                scroll(event.deltaY)
+                            }
+                        }
+                    }
+
+                    onEvent {
+                        mousewheel = { event ->
+                            event.preventDefault()
+                            event.stopPropagation()
+                            scroll(event.deltaY)
+                        }
+                    }
+                }
+                icon("fas fa-copy") {
+                    paddingLeft = 5.px
+                    paddingRight = 5.px
+                }
+                onClick {
+                    @Suppress("UNNECESSARY_SAFE_CALL")
+                    window.navigator.clipboard?.writeText(str)
+                }
             }
         }
 
@@ -53,67 +123,7 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
                 }
 
                 val javaName = name.toString().replace("/", ".").replace("$", ".")
-                hPanel {
-                    overflow = Overflow.HIDDEN
-                    style(pClass = PClass.HOVER) {
-                        textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
-                        cursor = Cursor.POINTER
-                    }
-
-                    div(className = "small-horizontal-scrollbar") {
-                        overflowX = Overflow.AUTO
-                        overflowY = Overflow.HIDDEN
-                        whiteSpace = WhiteSpace.NOWRAP
-
-                        fun scroll(deltaY: Double) {
-                            val el = getElement()
-                            if (el != null) {
-                                el.scrollLeft += deltaY
-                            }
-                        }
-
-                        div(className = BsBgColor.DARKSUBTLE.className) {
-                            setStyle("user-select", "none")
-
-                            code(javaName, className = BsBgColor.DARKSUBTLE.className) {
-                                setStyle("user-select", "all")
-                                padding = 2.px
-
-                                onEvent {
-                                    mousewheel = { event ->
-                                        event.preventDefault()
-                                        event.stopPropagation()
-                                        scroll(event.deltaY)
-                                    }
-                                }
-                            }
-
-                            onEvent {
-                                mousewheel = { event ->
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    scroll(event.deltaY)
-                                }
-                            }
-                        }
-
-                        onEvent {
-                            mousewheel = { event ->
-                                event.preventDefault()
-                                event.stopPropagation()
-                                scroll(event.deltaY)
-                            }
-                        }
-                    }
-                    icon("fas fa-copy") {
-                        paddingLeft = 5.px
-                        paddingRight = 5.px
-                    }
-                    onClick {
-                        @Suppress("UNNECESSARY_SAFE_CALL")
-                        window.navigator.clipboard?.writeText(javaName)
-                    }
-                }
+                scrollCopyContainer(javaName)
             }
         }
 
@@ -124,68 +134,7 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
                     whiteSpace = WhiteSpace.NOWRAP
                 }
 
-                hPanel {
-                    overflow = Overflow.HIDDEN
-                    style(pClass = PClass.HOVER) {
-                        textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
-                        cursor = Cursor.POINTER
-                    }
-
-                    div(className = "small-horizontal-scrollbar") {
-                        overflowX = Overflow.AUTO
-                        overflowY = Overflow.HIDDEN
-                        whiteSpace = WhiteSpace.NOWRAP
-
-                        fun scroll(deltaY: Double) {
-                            val el = getElement()
-                            if (el != null) {
-                                el.scrollLeft += deltaY
-                            }
-                        }
-
-                        div(className = BsBgColor.DARKSUBTLE.className) {
-                            setStyle("user-select", "none")
-
-                            code(name.toString(), className = BsBgColor.DARKSUBTLE.className) {
-                                setStyle("user-select", "all")
-                                padding = 2.px
-
-
-                                onEvent {
-                                    mousewheel = { event ->
-                                        event.preventDefault()
-                                        event.stopPropagation()
-                                        scroll(event.deltaY)
-                                    }
-                                }
-                            }
-
-                            onEvent {
-                                mousewheel = { event ->
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    scroll(event.deltaY)
-                                }
-                            }
-                        }
-
-                        onEvent {
-                            mousewheel = { event ->
-                                event.preventDefault()
-                                event.stopPropagation()
-                                scroll(event.deltaY)
-                            }
-                        }
-                    }
-                    icon("fas fa-copy") {
-                        paddingLeft = 5.px
-                        paddingRight = 5.px
-                    }
-                    onClick {
-                        @Suppress("UNNECESSARY_SAFE_CALL")
-                        window.navigator.clipboard?.writeText(name.toString())
-                    }
-                }
+                scrollCopyContainer(name.toString())
             }
         }
 
@@ -221,68 +170,7 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
                         }
                     }
                 } else {
-                    hPanel {
-                        overflow = Overflow.HIDDEN
-                        style(pClass = PClass.HOVER) {
-                            textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
-                            cursor = Cursor.POINTER
-                        }
-
-
-                        div(className = "small-horizontal-scrollbar") {
-                            overflowX = Overflow.AUTO
-                            overflowY = Overflow.HIDDEN
-                            whiteSpace = WhiteSpace.NOWRAP
-
-                            fun scroll(deltaY: Double) {
-                                val el = getElement()
-                                if (el != null) {
-                                    el.scrollLeft += deltaY
-                                }
-                            }
-
-                            div(className = BsBgColor.DARKSUBTLE.className) {
-                                setStyle("user-select", "none")
-
-                                code(str, className = BsBgColor.DARKSUBTLE.className) {
-                                    setStyle("user-select", "all")
-                                    padding = 2.px
-
-                                    onEvent {
-                                        mousewheel = { event ->
-                                            event.preventDefault()
-                                            event.stopPropagation()
-                                            scroll(event.deltaY)
-                                        }
-                                    }
-                                }
-
-                                onEvent {
-                                    mousewheel = { event ->
-                                        event.preventDefault()
-                                        event.stopPropagation()
-                                        scroll(event.deltaY)
-                                    }
-                                }
-                            }
-
-                            onEvent {
-                                mousewheel = { event ->
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    scroll(event.deltaY)
-                                }
-                            }
-                        }
-                        icon("fas fa-copy") {
-                            paddingLeft = 5.px
-                            paddingRight = 5.px
-                        }
-                        onClick {
-                            @Suppress("UNNECESSARY_SAFE_CALL")
-                            window.navigator.clipboard?.writeText(str)
-                        }
-                    }
+                    scrollCopyContainer(str)
                 }
             }
         }
@@ -318,68 +206,7 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
                         }
                     }
                 } else {
-                    hPanel {
-                        overflow = Overflow.HIDDEN
-                        style(pClass = PClass.HOVER) {
-                            textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
-                            cursor = Cursor.POINTER
-                        }
-
-
-                        div(className = "small-horizontal-scrollbar") {
-                            overflowX = Overflow.AUTO
-                            overflowY = Overflow.HIDDEN
-                            whiteSpace = WhiteSpace.NOWRAP
-
-                            fun scroll(deltaY: Double) {
-                                val el = getElement()
-                                if (el != null) {
-                                    el.scrollLeft += deltaY
-                                }
-                            }
-
-                            div(className = BsBgColor.DARKSUBTLE.className) {
-                                setStyle("user-select", "none")
-
-                                code(str, className = BsBgColor.DARKSUBTLE.className) {
-                                    setStyle("user-select", "all")
-                                    padding = 2.px
-
-                                    onEvent {
-                                        mousewheel = { event ->
-                                            event.preventDefault()
-                                            event.stopPropagation()
-                                            scroll(event.deltaY)
-                                        }
-                                    }
-                                }
-
-                                onEvent {
-                                    mousewheel = { event ->
-                                        event.preventDefault()
-                                        event.stopPropagation()
-                                        scroll(event.deltaY)
-                                    }
-                                }
-                            }
-
-                            onEvent {
-                                mousewheel = { event ->
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    scroll(event.deltaY)
-                                }
-                            }
-                        }
-                        icon("fas fa-copy") {
-                            paddingLeft = 5.px
-                            paddingRight = 5.px
-                        }
-                        onClick {
-                            @Suppress("UNNECESSARY_SAFE_CALL")
-                            window.navigator.clipboard?.writeText(str)
-                        }
-                    }
+                    scrollCopyContainer(str)
                 }
             }
         }
@@ -417,72 +244,10 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
                         }
                     }
                 } else {
-                    hPanel {
-                        overflow = Overflow.HIDDEN
-                        style(pClass = PClass.HOVER) {
-                            textDecoration = TextDecoration(TextDecorationLine.UNDERLINE, null, null)
-                            cursor = Cursor.POINTER
-                        }
-
-
-                        div(className = "small-horizontal-scrollbar") {
-                            overflowX = Overflow.AUTO
-                            overflowY = Overflow.HIDDEN
-                            whiteSpace = WhiteSpace.NOWRAP
-
-                            fun scroll(deltaY: Double) {
-                                val el = getElement()
-                                if (el != null) {
-                                    el.scrollLeft += deltaY
-                                }
-                            }
-
-                            div(className = BsBgColor.DARKSUBTLE.className) {
-                                setStyle("user-select", "none")
-
-                                code(str, className = BsBgColor.DARKSUBTLE.className) {
-                                    setStyle("user-select", "all")
-                                    padding = 2.px
-
-                                    onEvent {
-                                        mousewheel = { event ->
-                                            event.preventDefault()
-                                            event.stopPropagation()
-                                            scroll(event.deltaY)
-                                        }
-                                    }
-                                }
-
-                                onEvent {
-                                    mousewheel = { event ->
-                                        event.preventDefault()
-                                        event.stopPropagation()
-                                        scroll(event.deltaY)
-                                    }
-                                }
-                            }
-
-                            onEvent {
-                                mousewheel = { event ->
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    scroll(event.deltaY)
-                                }
-                            }
-                        }
-                        icon("fas fa-copy") {
-                            paddingLeft = 5.px
-                            paddingRight = 5.px
-                        }
-                        onClick {
-                            @Suppress("UNNECESSARY_SAFE_CALL")
-                            window.navigator.clipboard?.writeText(str)
-                        }
-                    }
+                    scrollCopyContainer(str)
                 }
             }
         }
-
     }
 
     val nsTabs = BetterTabPanel(className = "info-ns-tabs " + BsBorder.BORDER.className, tabPosition = if (window.isMobile()) TabPosition.TOP else TabPosition.LEFT).also {
@@ -512,6 +277,12 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
             }
             is FieldNode -> {
                 fieldExtra(baseNode)
+            }
+            is ConstantNode -> {
+                constantExtra(baseNode)
+            }
+            is TargetNode -> {
+                targetExtra(baseNode)
             }
         }
     }
@@ -559,6 +330,38 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
                 mixinTarget(fqn)
                 accessWidener(fqn, false)
                 accessTransform(fqn, false)
+            }
+        }
+    }
+
+    fun constantExtra(constantNode: ConstantNode) {
+        val fqn = constantNode.asFullyQualifiedName()
+        val cgn = constantNode.parent as ConstantGroupNode
+        for (name in namespaces) {
+            byNamespace[name].extra.apply {
+                hPanel {
+                    div("Constant: ") {
+                        paddingRight = 5.px
+                        whiteSpace = WhiteSpace.NOWRAP
+                    }
+                    scrollCopyContainer(constantNode.root.map(cgn.baseNs, name, fqn).toString())
+                }
+            }
+        }
+    }
+
+    fun targetExtra(targetNode: TargetNode) {
+        val fqn = targetNode.target
+        val cgn = targetNode.parent as ConstantGroupNode
+        for (name in namespaces) {
+            byNamespace[name].extra.apply {
+                hPanel {
+                    div("Target: ") {
+                        paddingRight = 5.px
+                        whiteSpace = WhiteSpace.NOWRAP
+                    }
+                    scrollCopyContainer(targetNode.root.map(cgn.baseNs, name, fqn).toString())
+                }
             }
         }
     }
@@ -719,6 +522,7 @@ class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*, *>) 
             is PackageNode -> {
                 baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), namespaces, false)
             }
+            is ConstantNode, is TargetNode -> {}
             else -> {
                 LOGGER.warn { "Unknown node type: ${baseNode::class.simpleName}" }
             }

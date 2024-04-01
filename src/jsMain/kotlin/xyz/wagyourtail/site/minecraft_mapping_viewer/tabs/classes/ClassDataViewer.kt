@@ -8,7 +8,7 @@ import io.kvision.utils.perc
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer
-import xyz.wagyourtail.unimined.mapping.tree.node.ClassNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
 
 class ClassDataViewer(val parentElement: ClassViewer, val classNode: ClassNode) : BetterTabPanel() {
     val LOGGER by KotlinLogging.logger()

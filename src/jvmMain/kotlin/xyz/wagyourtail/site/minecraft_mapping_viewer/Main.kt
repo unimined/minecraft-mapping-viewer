@@ -28,7 +28,7 @@ fun Application.main() {
     install(Compression)
     install(CachingHeaders) {
         options { call, _ ->
-            call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
+//            call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
             CachingOptions(CacheControl.MaxAge(86400))
         }
     }

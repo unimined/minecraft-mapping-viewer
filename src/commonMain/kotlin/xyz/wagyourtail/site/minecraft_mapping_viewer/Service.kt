@@ -18,10 +18,7 @@ interface IMappingService {
     @KVBinding(Method.GET, "mappings")
     suspend fun availableMappings(mcVersion: String, envType: EnvType): Map<String, MappingInfo>
 
-    @KVBinding(Method.GET, "baseMappings")
-    suspend fun requestBaseMappings(mcVersion: String, envType: EnvType): String
-
     @KVBinding(Method.GET, "mappingPatches")
-    suspend fun requestMappingPatch(mcVersion: String, envType: EnvType, mapping: String, version: String): String
+    suspend fun requestMappingPatch(mcVersion: String, envType: EnvType, mapping: String, version: String?): String
 
 }
