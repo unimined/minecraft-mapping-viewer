@@ -94,7 +94,7 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
                     val tree = resolver.resolve()
 
                     cacheFile.sink().buffer().use { buf ->
-                        tree.accept(UMFWriter.write(env, buf), (listOf(provider.srcNs) + provider.dstNs).toSet().map { Namespace(it) }, true)
+                        tree.accept(UMFWriter.write(env, buf), (listOf("official") + provider.dstNs).toSet().map { Namespace(it) }, true)
                     }
                 }
             }.also {

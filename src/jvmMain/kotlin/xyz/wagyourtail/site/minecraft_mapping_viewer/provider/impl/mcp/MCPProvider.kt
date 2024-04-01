@@ -19,6 +19,8 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
+import xyz.wagyourtail.unimined.mapping.visitor.delegate.copyTo
+import xyz.wagyourtail.unimined.mapping.visitor.delegate.renest
 import kotlin.io.path.*
 import kotlin.time.measureTime
 
@@ -96,7 +98,6 @@ object MCPProvider : MappingPatchProvider("mcp") {
                 "source" to "searge",
                 "target" to "mcp"
             )
-
         })
     }
 
