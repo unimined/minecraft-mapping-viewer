@@ -27,11 +27,7 @@ object RetroMCPProvider : MappingPatchProvider("retro-mcp") {
 
     val LOGGER = KotlinLogging.logger {  }
 
-    override val requires: List<Pair<MappingPatchProvider, (String, String?) -> String?>> = listOf(
-        SeargeProvider to { mcVersion, _ -> mcVersion }
-    )
-
-    override val srcNs: String = "searge"
+    override val srcNs: String = "official"
     override val dstNs: List<String> = listOf("mcp")
 
 
@@ -54,7 +50,7 @@ object RetroMCPProvider : MappingPatchProvider("retro-mcp") {
     }
 
     override fun availableVersions(mcVersion: String, env: EnvType): List<String>? {
-        if ((env != EnvType.JOINED) xor (MappingService.mcVersionCompare(mcVersion, "1.3") < 0)) return emptyList()
+        if ((env == EnvType.JOINED) xor (MappingService.mcVersionCompare(mcVersion, "1.2.5") < 0)) return emptyList()
         return if (availableVersions.contains(mcVersion)) null else emptyList()
     }
 

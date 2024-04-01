@@ -72,6 +72,7 @@ object SeargeProvider : MappingPatchProvider("searge") {
     }
 
     override fun availableVersions(mcVersion: String, env: EnvType): List<String>? {
+        if (env != EnvType.JOINED) return emptyList()
         return availableVersions.getOrDefault(mcVersion, emptyMap())
             .flatMap { it.value }
             .map { if (it == mcVersion) it else it.substringAfter("$mcVersion-") }

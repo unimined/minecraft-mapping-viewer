@@ -37,17 +37,23 @@ abstract class MappingPatchProvider(val mappingId: String) {
             val filtered = mutableListOf<String>()
             for (version in versions) {
                 // ensure the version is available in requires
+                var shouldAdd = true
                 for ((provider, versionGetter) in requires) {
                     val reqVers = versionGetter(mcVersion, version)
                     if (reqVers == null) {
-                        if (availableVersions[provider] == null) {
-                            filtered.add(version)
+                        if (availableVersions[provider] != null) {
+                            shouldAdd = false
+                            break
                         }
                     } else {
-                        if (availableVersions[provider]?.contains(reqVers) == true) {
-                            filtered.add(version)
+                        if (availableVersions[provider]?.contains(reqVers) != true) {
+                            shouldAdd = false
+                            break
                         }
                     }
+                } // else
+                if (shouldAdd) {
+                    filtered.add(version)
                 }
             }
             return filtered
