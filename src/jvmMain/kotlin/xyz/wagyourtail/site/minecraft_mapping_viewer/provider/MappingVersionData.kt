@@ -2,12 +2,21 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer.provider
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.util.*
+import io.ktor.utils.io.jvm.javaio.*
+import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okio.buffer
 import okio.sink
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
+import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingInfo
-import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.*
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.fabric.IntermediaryProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.fabric.YarnProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.legacy_fabric.LegacyIntermediaryProvider
@@ -20,16 +29,15 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.mojmap.Parchm
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.ornithe.CalamusProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.ornithe.FeatherProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
+import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.LauncherMeta
 import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.MCVersion
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFWriter
+import xyz.wagyourtail.unimined.mapping.propogator.PropogatorImpl
 import xyz.wagyourtail.unimined.mapping.util.associateNonNull
-import kotlin.io.path.createParentDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.getLastModifiedTime
-import kotlin.io.path.readText
+import kotlin.io.path.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.measureTime
 import kotlin.time.toJavaDuration
@@ -54,6 +62,28 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
             ParchmentProvider,
         ).associateBy { it.mappingId }
 
+    }
+
+    private val mcJar by lazy {
+        runBlocking {
+            val target = CACHE_DIR.resolve("mc/${mcVersion.id}/${env.name}.jar").createParentDirectories()
+            if (!target.exists()) {
+                val resp = MMV_HTTP_CLIENT.get(mcVersion.url)
+                if (resp.status != HttpStatusCode.OK) throw Exception("Failed to get client json")
+                Json.parseToJsonElement(resp.bodyAsText()).jsonObject["downloads"]!!.jsonObject.let {
+                    if (env == EnvType.SERVER) {
+                        it["server"]?.jsonObject?.get("url")?.jsonPrimitive?.content
+                    } else {
+                        it["client"]?.jsonObject?.get("url")?.jsonPrimitive?.content
+                    }
+                }?.let {
+                    val resp2 = MMV_HTTP_CLIENT.get(it)
+                    if (resp2.status != HttpStatusCode.OK) throw Exception("Failed to get mc jar")
+                    resp2.bodyAsChannel().toInputStream().copyTo(target.outputStream())
+                }
+            }
+            target
+        }
     }
 
     val availableMappings by ExpiringDelegate {
@@ -85,7 +115,10 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
         // not exists, or is older than 1 day
         if (!cacheFile.exists() || cacheFile.getLastModifiedTime().toMillis() < System.currentTimeMillis() - 1.days.inWholeMilliseconds) {
             measureTime {
-                val resolver = MappingResolverImpl("patch", null) //TODO: non-null propogator
+                val resolver = MappingResolverImpl("patch") {
+                    PropogatorImpl(Namespace("official"), this, setOf(mcJar))
+                        .propogate(provider.dstNs.map { Namespace(it) }.toSet())
+                }
 
                 getMappingPatchIntl(provider, version, resolver)
 

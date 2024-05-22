@@ -1,11 +1,11 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.resolver
 
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
-import xyz.wagyourtail.unimined.mapping.tree.MappingTree
+import xyz.wagyourtail.unimined.mapping.tree.MemoryMappingTree
 
 class MappingResolverImpl(
     name: String,
-    propogator: (MappingTree.() -> Unit)?
+    propogator: (MemoryMappingTree.() -> Unit)?
 ): MappingResolver(name, propogator) {
 
 //    override val mojmapLocation: Location = Location("", object : Completer {

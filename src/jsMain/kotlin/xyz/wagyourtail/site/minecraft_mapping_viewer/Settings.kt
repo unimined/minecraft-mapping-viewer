@@ -168,7 +168,8 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
         var changed = false
         selectedMappings.subscribe { map ->
             LOGGER.info { "updated selected mappings: $map" }
-            selectedMappingNs.setState((listOf(Namespace("official")) + map.keys.mapNotNull { availableMappings.value!![it]?.dstNs }.flatten().map { Namespace(it) }).toSet().toList())
+            val mappings = (listOf("official") + (availableMappings.value ?: emptyMap()).entries.filter { map.containsKey(it.key) }.map { it.value.dstNs }.flatten()).toSet()
+            selectedMappingNs.setState(mappings.map { Namespace(it) })
             LOGGER.info { "updated selected mapping namespaces: ${selectedMappingNs.value}" }
             if (updating.value) return@subscribe
             if (app.titlebar.settingsVisible.value && window.isMobile()) {

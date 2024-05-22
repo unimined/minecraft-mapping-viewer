@@ -15,11 +15,12 @@ import okio.buffer
 import okio.source
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
+import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingService
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
-import xyz.wagyourtail.unimined.mapping.visitor.delegate.renest
+import xyz.wagyourtail.unimined.mapping.visitor.fixes.renest
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.time.measureTime
@@ -83,10 +84,18 @@ object YarnProvider : MappingPatchProvider("yarn") {
             requires("intermediary")
             provides("yarn" to true)
 
-            mapNamespace(
-                "named" to "yarn",
-                "source" to "yarn"
-            )
+            if (MappingService.mcVersionCompare(mcVersion, "1.14.2") > -1 && MappingService.mcVersionCompare(mcVersion, "1.14") < 1) {
+                // headers are backwards on v2 from 1.14-1.14.2
+                mapNamespace(
+                    "intermediary" to "yarn",
+                    "named" to "intermediary"
+                )
+            } else {
+                mapNamespace(
+                    "named" to "yarn",
+                    "source" to "yarn"
+                )
+            }
 
             afterLoad.add {
                 it.renest("intermediary", "yarn")
