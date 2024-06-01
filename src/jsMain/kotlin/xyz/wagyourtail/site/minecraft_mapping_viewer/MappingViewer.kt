@@ -10,6 +10,7 @@ import io.kvision.panel.StackPanel
 import io.kvision.panel.flexPanel
 import io.kvision.state.ObservableValue
 import io.kvision.utils.perc
+import xyz.wagyourtail.site.minecraft_mapping_viewer.import.ImportExportView
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ConstantGroupViewer
@@ -32,6 +33,10 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
     private var tabs = BetterTabPanel(className = "mapping-viewer") {
         width = 100.perc
         height = 100.perc
+    }
+
+    private val importExport = ImportExportView(this).also {
+        add(it)
     }
 
     private val nothing = div("No mappings loaded")
@@ -67,7 +72,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
             }
         }
 
-        mappings.subscribe {
+        mappings.subscribe { map ->
             // print stack trace
             remove(tabs)
             tabs = BetterTabPanel(className = "mapping-viewer") {
@@ -91,33 +96,33 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                     }
 
                     LOGGER.info { "Updating packages tab" }
-                    packagesTab.update(app.settings.selectedMappingNs.value, it?.packageList() ?: emptyList())
-                    if (it?.packagesIter()?.hasNext() == true) {
+                    packagesTab.update(app.settings.selectedMappingNs.value, map?.packageList() ?: emptyList())
+                    if (map?.packagesIter()?.hasNext() == true) {
                         tabs.addTab("Packages", packagesTab)
                     }
 
                     LOGGER.info { "Updating classes tab" }
                     classesTab.update(
                         app.settings.selectedMappingNs.value,
-                        it?.filterClassByQuery(
+                        map?.filterClassByQuery(
                             app.titlebar.typeahead.value ?: "",
                             SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
                         ) ?: emptyList()
                     )
-                    if (it?.classesIter()?.hasNext() == true) {
+                    if (map?.classesIter()?.hasNext() == true) {
                         tabs.addTab("Classes", classesTab)
-                        tabs.activeIndex = if (it.packagesIter().hasNext()) 1 else 0
+                        tabs.activeIndex = if (map.packagesIter().hasNext()) 1 else 0
                     }
 
                     LOGGER.info { "Updating constants tab" }
-                    constantsTab.update(app.settings.selectedMappingNs.value, it?.constantGroupList() ?: emptyList())
-                    if (it?.constantGroupsIter()?.hasNext() == true) {
+                    constantsTab.update(app.settings.selectedMappingNs.value, map?.constantGroupList() ?: emptyList())
+                    if (map?.constantGroupsIter()?.hasNext() == true) {
                         tabs.addTab("Constants", constantsTab)
                     }
 
                     LOGGER.info { "Done updating tabs" }
 
-                    if (it == null || (!it.packagesIter().hasNext() && !it.classesIter().hasNext() && !it.constantGroupsIter().hasNext())) {
+                    if (map == null || (!map.packagesIter().hasNext() && !map.classesIter().hasNext() && !map.constantGroupsIter().hasNext())) {
                         LOGGER.info { "Mappings are empty!" }
                         activeChild = nothing
                     } else {
@@ -151,6 +156,16 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                 LOGGER.info { "finished updating search in $it" }
                 activeChild = tabs
             }
+        }
+    }
+
+    fun importExport() {
+        if (activeChild == tabs) {
+            LOGGER.info { "Switching to import/export" }
+            activeChild = importExport
+        } else if (activeChild == importExport) {
+            LOGGER.info { "Switching to tabs" }
+            activeChild = tabs
         }
     }
 

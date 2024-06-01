@@ -66,18 +66,11 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
         justifyContent = JustifyContent.CENTER
         margin = 10.px
 
-        button("Import") {
+        button("Import/Export") {
             marginRight = 5.px
 
             onClick {
-                println("Import")
-            }
-        }
-        button("Export", style = ButtonStyle.SECONDARY) {
-            marginLeft = 5.px
-
-            onClick {
-                println("Export")
+                app.mappingViewer.importExport()
             }
         }
     }

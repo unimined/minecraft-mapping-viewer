@@ -1,5 +1,7 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer
 
+import org.khronos.webgl.ArrayBuffer
+import org.khronos.webgl.Int8Array
 import org.w3c.dom.Window
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.four.three.three.MethodDescriptor
@@ -110,3 +112,6 @@ fun AbstractMappingTree.filterClassByQuery(query: String, type: SearchType = Sea
 //}
 
 fun <T> emptyIterator() = emptyList<T>().iterator()
+
+fun ArrayBuffer.toByteArray(): ByteArray = Int8Array(this).unsafeCast<ByteArray>()
+fun ArrayBuffer?.toByteArray(): ByteArray? = this?.run { Int8Array(this).unsafeCast<ByteArray>() }
