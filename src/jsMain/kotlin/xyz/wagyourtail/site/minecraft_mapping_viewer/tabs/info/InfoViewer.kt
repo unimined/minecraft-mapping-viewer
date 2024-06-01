@@ -22,7 +22,8 @@ import xyz.wagyourtail.unimined.mapping.jvms.four.AccessFlag
 import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.ObjectType
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.one.InternalName
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
-import xyz.wagyourtail.unimined.mapping.tree.MappingTree
+import xyz.wagyourtail.unimined.mapping.tree.AbstractMappingTree
+import xyz.wagyourtail.unimined.mapping.tree.MemoryMappingTree
 import xyz.wagyourtail.unimined.mapping.tree.node.*
 import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
 import xyz.wagyourtail.unimined.mapping.tree.node._class.member.FieldNode
@@ -502,7 +503,7 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
     }
 
     init {
-        val tree = MappingTree()
+        val tree = MemoryMappingTree()
         when (baseNode) {
             is ClassNode -> {
                 baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), namespaces, false)

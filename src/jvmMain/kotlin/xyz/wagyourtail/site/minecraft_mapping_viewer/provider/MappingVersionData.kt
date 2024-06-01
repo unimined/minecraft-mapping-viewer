@@ -8,7 +8,9 @@ import io.ktor.http.*
 import io.ktor.util.*
 import io.ktor.utils.io.jvm.javaio.*
 import io.ktor.utils.io.jvm.javaio.copyTo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -66,23 +68,25 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
 
     private val mcJar by lazy {
         runBlocking {
-            val target = CACHE_DIR.resolve("mc/${mcVersion.id}/${env.name}.jar").createParentDirectories()
-            if (!target.exists()) {
-                val resp = MMV_HTTP_CLIENT.get(mcVersion.url)
-                if (resp.status != HttpStatusCode.OK) throw Exception("Failed to get client json")
-                Json.parseToJsonElement(resp.bodyAsText()).jsonObject["downloads"]!!.jsonObject.let {
-                    if (env == EnvType.SERVER) {
-                        it["server"]?.jsonObject?.get("url")?.jsonPrimitive?.content
-                    } else {
-                        it["client"]?.jsonObject?.get("url")?.jsonPrimitive?.content
+            withContext(Dispatchers.IO) {
+                val target = CACHE_DIR.resolve("mc/${mcVersion.id}/${env.name}.jar").createParentDirectories()
+                if (!target.exists()) {
+                    val resp = MMV_HTTP_CLIENT.get(mcVersion.url)
+                    if (resp.status != HttpStatusCode.OK) throw Exception("Failed to get client json")
+                    Json.parseToJsonElement(resp.bodyAsText()).jsonObject["downloads"]!!.jsonObject.let {
+                        if (env == EnvType.SERVER) {
+                            it["server"]?.jsonObject?.get("url")?.jsonPrimitive?.content
+                        } else {
+                            it["client"]?.jsonObject?.get("url")?.jsonPrimitive?.content
+                        }
+                    }?.let {
+                        val resp2 = MMV_HTTP_CLIENT.get(it)
+                        if (resp2.status != HttpStatusCode.OK) throw Exception("Failed to get mc jar")
+                        resp2.bodyAsChannel().toInputStream().copyTo(target.outputStream())
                     }
-                }?.let {
-                    val resp2 = MMV_HTTP_CLIENT.get(it)
-                    if (resp2.status != HttpStatusCode.OK) throw Exception("Failed to get mc jar")
-                    resp2.bodyAsChannel().toInputStream().copyTo(target.outputStream())
                 }
+                target
             }
-            target
         }
     }
 

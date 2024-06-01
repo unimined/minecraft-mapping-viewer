@@ -215,10 +215,10 @@ class MinecraftMappingViewer : Application() {
             val (env, mcVers, selected) = data
             inc++
 
-            mappingViewer.loading.setState(true)
-            mappingViewer.mappings.setState(null)
-
             AppScope.launch {
+                mappingViewer.mappings.setState(null)
+                mappingViewer.loading.setState(true)
+
                 LOGGER.info { "selected mappings changed ($inc): $selected" }
                 val required = selected.filter { it.value == null }.keys
                 val mc = env to mcVers

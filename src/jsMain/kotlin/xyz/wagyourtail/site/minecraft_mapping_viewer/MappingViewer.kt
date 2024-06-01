@@ -58,13 +58,17 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
     init {
         loading.subscribe {
             if (it) {
+                LOGGER.info { "Loading Started" }
                 singleRender {
                     activeChild = loadingDiv
                 }
+            } else {
+                LOGGER.info { "Loading Ended" }
             }
         }
 
         mappings.subscribe {
+            // print stack trace
             remove(tabs)
             tabs = BetterTabPanel(className = "mapping-viewer") {
                 width = 100.perc
@@ -81,7 +85,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
             loading.setState(true)
             app.titlebar.typeahead.input.tomSelectJs?.clearOptions()
             measureTime {
-                singleRenderAsync {
+                singleRender {
                     for (i in tabs.getTabs().indices.reversed()) {
                         tabs.removeTab(i)
                     }
@@ -124,6 +128,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
             }.also {
                 LOGGER.info { "finished updating in $it" }
             }
+            loading.setState(false)
         }
 
         var prevQuery: Pair<SearchType, String>? = null
@@ -143,7 +148,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                     ) ?: emptyList()
                 )
             }.also {
-                LOGGER.info { "finished updating in $it" }
+                LOGGER.info { "finished updating search in $it" }
                 activeChild = tabs
             }
         }

@@ -2,14 +2,16 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.logger
-import io.kvision.core.AlignItems
-import io.kvision.core.BsBgColor
-import io.kvision.core.WhiteSpace
+import io.kvision.core.*
 import io.kvision.form.check.checkBox
 import io.kvision.form.select.select
 import io.kvision.form.select.selectInput
+import io.kvision.html.ButtonStyle
 import io.kvision.html.Div
+import io.kvision.html.button
 import io.kvision.html.div
+import io.kvision.panel.FlexPanel
+import io.kvision.panel.VPanel
 import io.kvision.panel.hPanel
 import io.kvision.panel.vPanel
 import io.kvision.state.ObservableSetWrapper
@@ -23,7 +25,9 @@ import kotlinx.serialization.json.*
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 
-class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODYSECONDARY.className) {
+class Settings(val app: MinecraftMappingViewer) : VPanel(
+    className = BsBgColor.BODYSECONDARY.className,
+) {
     val LOGGER by KotlinLogging.logger()
     init {
         whiteSpace = WhiteSpace.NOWRAP
@@ -55,6 +59,26 @@ class Settings(val app: MinecraftMappingViewer) : Div(className = BsBgColor.BODY
         div(className = BsBgColor.BODYTERTIARY.className) {
             width = 100.perc
             height = 2.px
+        }
+    }
+
+    private val importExport = hPanel {
+        justifyContent = JustifyContent.CENTER
+        margin = 10.px
+
+        button("Import") {
+            marginRight = 5.px
+
+            onClick {
+                println("Import")
+            }
+        }
+        button("Export", style = ButtonStyle.SECONDARY) {
+            marginLeft = 5.px
+
+            onClick {
+                println("Export")
+            }
         }
     }
 
