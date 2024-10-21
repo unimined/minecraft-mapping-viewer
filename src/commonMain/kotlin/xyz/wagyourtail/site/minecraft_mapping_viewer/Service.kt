@@ -9,11 +9,14 @@ import xyz.wagyourtail.unimined.mapping.EnvType
 @Serializable
 data class MappingInfo(val srcNs: String, val dstNs: List<String>, val versions: List<String>?)
 
+@Serializable
+data class VersionInfo(val id: String, val release: Boolean)
+
 @KVService
 interface IMappingService {
 
     @KVBinding(Method.GET, "versions")
-    suspend fun requestVersions(): List<Pair<String, Boolean>>
+    suspend fun requestVersions(): List<VersionInfo>
 
     @KVBinding(Method.GET, "mappings")
     suspend fun availableMappings(mcVersion: String, envType: EnvType): Map<String, MappingInfo>

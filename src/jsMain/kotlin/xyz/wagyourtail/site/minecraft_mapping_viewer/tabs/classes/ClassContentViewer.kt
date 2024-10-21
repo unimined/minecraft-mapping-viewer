@@ -20,6 +20,8 @@ import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
 import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
 import xyz.wagyourtail.unimined.mapping.tree.node._class.member.FieldNode
 import xyz.wagyourtail.unimined.mapping.tree.node._class.member.MethodNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.method.LocalNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.method.ParameterNode
 
 class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) : Div() {
 
@@ -210,13 +212,13 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
             }
         }
 
-        val selectedParam = ObservableValue<MethodNode.ParameterNode?>(null)
-        val selectedLocal = ObservableValue<MethodNode.LocalNode?>(null)
+        val selectedParam = ObservableValue<ParameterNode<*>?>(null)
+        val selectedLocal = ObservableValue<LocalNode<*>?>(null)
 
-        val hasParams = method?.params?.isNotEmpty() ?: false
+        val hasParams = method?.params?.resolve()?.isNotEmpty() ?: false
         val hasLocals = method?.locals?.isNotEmpty() ?: false
 
-        fun selectParam(param: MethodNode.ParameterNode?) {
+        fun selectParam(param: ParameterNode<*>?) {
             singleRender {
                 val activeTabName = leftTabs.activeTab?.label
                 leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
@@ -234,7 +236,7 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
             }
         }
 
-        fun selectLocal(local: MethodNode.LocalNode?) {
+        fun selectLocal(local: LocalNode<*>?) {
             singleRender {
                 val activeTabName = rightTabs.activeTab?.label
                 leftTabs.getTabs().withIndex().reversed().forEach { (i, it) ->
@@ -281,7 +283,7 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
             }
 
             val paramBody = paramList.body {}
-            for (param in method.params) {
+            for (param in method.params.resolve()) {
                 paramBody.row(data = param) {
                     cell(param.index?.toString() ?: "-")
                     cell(param.lvOrd?.toString() ?: "-")
@@ -291,7 +293,7 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
                 }
             }
             paramList.activeRow.subscribe {
-                if (it is MethodNode.ParameterNode?) {
+                if (it is ParameterNode<*>?) {
                     selectParam(it)
                 }
             }
@@ -315,7 +317,7 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
             }
 
             localList.activeRow.subscribe {
-                if (it is MethodNode.LocalNode?) {
+                if (it is LocalNode<*>?) {
                     selectLocal(it)
                 }
             }

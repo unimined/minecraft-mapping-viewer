@@ -16,6 +16,7 @@ import okio.source
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
@@ -51,7 +52,7 @@ object FeatherProvider : MappingPatchProvider("feather") {
         return availableVersions.get(realMcVersion) ?: emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         val realMcVersion = if (env == EnvType.JOINED) mcVersion else "$mcVersion-${env.name.lowercase()}"
         val versions = availableVersions.get(realMcVersion) ?: throw IllegalArgumentException("Invalid mcVersion")
         if (!versions.contains(version)) throw IllegalArgumentException("Invalid version")
@@ -79,7 +80,8 @@ object FeatherProvider : MappingPatchProvider("feather") {
             ContentProvider.of(
                 "feather-$realMcVersion+build.${version}-v2.jar",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "feather"
         ).apply {
 
             requires("calamus")
@@ -91,8 +93,8 @@ object FeatherProvider : MappingPatchProvider("feather") {
                 "source" to "feather",
             )
 
-            afterLoad.add {
-                it.renest("calamus", "feather")
+            into.afterLoad.add {
+                renest("calamus", "feather")
             }
 
         })

@@ -28,11 +28,9 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
 import xyz.wagyourtail.site.minecraft_mapping_viewer.toByteArray
 import xyz.wagyourtail.unimined.mapping.Namespace
-import xyz.wagyourtail.unimined.mapping.formats.FormatProvider
 import xyz.wagyourtail.unimined.mapping.formats.FormatRegistry
 import xyz.wagyourtail.unimined.mapping.formats.unsupported.UnsupportedWriter
 import xyz.wagyourtail.unimined.mapping.formats.zip.ZipReader
-import xyz.wagyourtail.unimined.mapping.util.escape
 import xyz.wagyourtail.unimined.mapping.visitor.delegate.mapNs
 import xyz.wagyourtail.unimined.mapping.visitor.delegate.nsFiltered
 import xyz.wagyourtail.unimined.mapping.visitor.delegate.recordNamespaces
@@ -103,7 +101,7 @@ class ImportExportView(mappingViewer: MappingViewer) : Div() {
                                     val env = mappingViewer.app.settings.getEnv()
                                     val format = FormatRegistry.autodetectFormat(env, fileData.name, buf)
                                     if (format == null) {
-                                        if (ZipReader.isFormat(env, fileData.name, buf)) {
+                                        if (ZipReader.isFormat(fileData.name, buf)) {
                                             window.alert("Zip/Jar files are not currently supported")
                                         } else {
                                             window.alert("Unknown format")
@@ -116,10 +114,10 @@ class ImportExportView(mappingViewer: MappingViewer) : Div() {
                                     }
                                     val ns = mutableSetOf<Namespace>()
                                     format.reader.read(
-                                        env,
                                         buf,
                                         mappingViewer.mappings.value!!,
                                         mappingViewer.mappings.value!!.nsFiltered("", inverted = true).recordNamespaces { ns.addAll(it) },
+                                        env,
                                         maps.map { (it.key.value ?: "") to (it.value.value ?: "") }.toMap()
                                     )
                                     mappingViewer.app.settings.selectedMappingNs.setState((mappingViewer.app.settings.selectedMappingNs.value + ns).toSet().toList())
@@ -212,8 +210,8 @@ class ImportExportView(mappingViewer: MappingViewer) : Div() {
                                     }
                                     val writer = provider.writer
                                     mappingViewer.mappings.value?.accept(writer.write(
-                                        env,
-                                        it
+                                        it,
+                                        env
                                     ).mapNs(maps.map { Namespace(it.key.value!!) to Namespace(it.value.value!!) }.toMap()).nsFiltered(maps.keys.map { Namespace(it.value!!) }.toSet()))
                                     this@ImportExportView.download(Blob(arrayOf(Uint8Array(it.readByteArray().toTypedArray()).buffer), BlobPropertyBag("text/plain;charset=utf-8")), "mappings.${writer.name}")
                                 }

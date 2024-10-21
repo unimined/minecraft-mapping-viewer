@@ -35,6 +35,7 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
 
     val settingsVisible = ObservableValue(false)
 
+    @OptIn(ExperimentalStdlibApi::class)
     val searchType = SelectInput(
         options = SearchType.entries.map { it.name to it.displayName },
         value = SearchType.KEYWORD.name

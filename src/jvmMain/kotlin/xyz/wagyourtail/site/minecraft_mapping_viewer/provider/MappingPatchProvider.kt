@@ -1,5 +1,6 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.provider
 
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
 
@@ -60,6 +61,6 @@ abstract class MappingPatchProvider(val mappingId: String) {
         }
     }
 
-    abstract fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver)
+    abstract fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl)
 
 }

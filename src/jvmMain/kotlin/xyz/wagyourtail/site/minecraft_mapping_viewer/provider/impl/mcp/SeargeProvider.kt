@@ -8,15 +8,16 @@ import io.ktor.util.*
 import kotlinx.coroutines.runBlocking
 import okio.buffer
 import okio.source
+import xyz.wagyourtail.commonskt.utils.mutliAssociate
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingService
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
-import xyz.wagyourtail.unimined.mapping.util.mutliAssociate
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.*
 import kotlin.time.measureTime
@@ -79,7 +80,7 @@ object SeargeProvider : MappingPatchProvider("searge") {
             .toSet().toList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         val correctedVersion = if (version == mcVersion) version else "$mcVersion-$version"
         val versions = availableVersions[mcVersion] ?: throw IllegalArgumentException("Invalid mcVersion $mcVersion")
         val versionType = versions.entries.firstOrNull { it.value.contains(correctedVersion) }?.key ?: throw IllegalArgumentException("Invalid version $correctedVersion")
@@ -113,7 +114,8 @@ object SeargeProvider : MappingPatchProvider("searge") {
             ContentProvider.of(
                 "mcp_config-${mcVersion}-${correctedVersion}.zip",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "searge"
         ).apply {
 
             requires("official")

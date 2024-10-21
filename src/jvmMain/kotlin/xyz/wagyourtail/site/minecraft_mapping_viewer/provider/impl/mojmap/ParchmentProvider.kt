@@ -9,14 +9,15 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
 import okio.buffer
 import okio.source
+import xyz.wagyourtail.commonskt.collection.defaultedMapOf
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
-import xyz.wagyourtail.unimined.mapping.util.defaultedMapOf
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.io.path.*
 import kotlin.time.measureTime
@@ -76,7 +77,7 @@ object ParchmentProvider : MappingPatchProvider("parchment") {
         return if (availableMcVersions.contains(mcVersion)) availableVersions[mcVersion] else emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         if (!availableMcVersions.contains(mcVersion)) throw IllegalArgumentException("Invalid mcVersion")
         if (!availableVersions[mcVersion].contains(version)) throw IllegalArgumentException("Invalid version")
 
@@ -104,7 +105,8 @@ object ParchmentProvider : MappingPatchProvider("parchment") {
             ContentProvider.of(
                 "parchment-${mcVersion}-${version}.zip",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "parchment"
         ).apply {
             mapNamespace("source", "mojmap")
             requires("mojmap")

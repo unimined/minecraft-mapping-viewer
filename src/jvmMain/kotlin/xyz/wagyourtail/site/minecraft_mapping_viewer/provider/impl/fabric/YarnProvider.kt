@@ -17,6 +17,7 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingService
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
@@ -51,7 +52,7 @@ object YarnProvider : MappingPatchProvider("yarn") {
         return availableVersions.get(mcVersion) ?: emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         val versions = availableVersions.get(mcVersion) ?: throw IllegalArgumentException("Invalid mcVersion")
         if (!versions.contains(version)) throw IllegalArgumentException("Invalid version")
 
@@ -78,7 +79,8 @@ object YarnProvider : MappingPatchProvider("yarn") {
             ContentProvider.of(
                 "yarn-$mcVersion+build.${version}-v2.jar",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "yarn"
         ).apply {
 
             requires("intermediary")
@@ -97,8 +99,8 @@ object YarnProvider : MappingPatchProvider("yarn") {
                 )
             }
 
-            afterLoad.add {
-                it.renest("intermediary", "yarn")
+            into.afterLoad.add {
+                renest("intermediary", "yarn")
             }
 
         })

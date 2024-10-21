@@ -45,8 +45,8 @@ actual class MappingService : IMappingService {
 
     }
 
-    override suspend fun requestVersions(): List<Pair<String, Boolean>> {
-        return minecraftVersions.versions.map { it.id to (it.type == "release") }
+    override suspend fun requestVersions(): List<VersionInfo> {
+        return minecraftVersions.versions.map { VersionInfo(it.id, it.type == "release") }
     }
 
     override suspend fun availableMappings(mcVersion: String, envType: EnvType): Map<String, MappingInfo> {

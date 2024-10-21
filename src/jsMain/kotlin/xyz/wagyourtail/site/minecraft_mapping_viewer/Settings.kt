@@ -25,6 +25,7 @@ import kotlinx.serialization.json.*
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 
+@OptIn(ExperimentalStdlibApi::class)
 class Settings(val app: MinecraftMappingViewer) : VPanel(
     className = BsBgColor.BODYSECONDARY.className,
 ) {
@@ -34,7 +35,7 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
         +("Settings")
     }
 
-    private val versions = ObservableValue<List<Pair<String, Boolean>>?>(null)
+    private val versions = ObservableValue<List<VersionInfo>?>(null)
 
     init {
         AppScope.launch {
@@ -208,14 +209,14 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
 
     fun mcVersionCompare(a: String, b: String): Int {
         val minecraftVersions = versions.value ?: return 0
-        val aVer = minecraftVersions.indexOfFirst { it.first == a }
-        val bVer = minecraftVersions.indexOfFirst { it.first == b }
+        val aVer = minecraftVersions.indexOfFirst { it.id == a }
+        val bVer = minecraftVersions.indexOfFirst { it.id == b }
         if (aVer == -1 || bVer == -1) throw IllegalArgumentException("Invalid Minecraft version")
         return aVer.compareTo(bVer)
     }
 
     fun updateVersions() {
-        mcVersion.options = versions.value?.filter { it.second || snapshots.value }?.map { it.first to it.first }
+        mcVersion.options = versions.value?.filter { it.release || snapshots.value }?.map { it.id to it.id }
         if (mcVersion.value == null) {
             mcVersion.value = mcVersion.options?.firstOrNull()?.first
         }

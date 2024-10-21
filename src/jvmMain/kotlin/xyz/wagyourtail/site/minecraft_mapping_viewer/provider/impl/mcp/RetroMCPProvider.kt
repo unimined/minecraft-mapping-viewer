@@ -16,6 +16,7 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingService
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
@@ -54,7 +55,7 @@ object RetroMCPProvider : MappingPatchProvider("retro-mcp") {
         return if (availableVersions.contains(mcVersion)) null else emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         val mappingURL = availableVersions.get(mcVersion) ?: throw IllegalArgumentException("Invalid mcVersion")
         if (version != null) throw IllegalArgumentException("Invalid version")
 
@@ -76,14 +77,15 @@ object RetroMCPProvider : MappingPatchProvider("retro-mcp") {
         }
 
         // read cache file
-        into.addDependency("mcp", into.MappingEntry(
+        into.addDependency("retro-mcp", into.MappingEntry(
             ContentProvider.of(
                 "retromcp-$mcVersion.zip",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "retro-mcp"
         ).apply {
 
-            provides("mcp" to true)
+            provides("retro-mcp" to true)
 
             when (env) {
                 EnvType.CLIENT -> {
@@ -97,9 +99,9 @@ object RetroMCPProvider : MappingPatchProvider("retro-mcp") {
 
             mapNamespace(
                 // exc file
-                "source" to "mcp",
+                "source" to "retro-mcp",
                 // tiny file
-                "named" to "mcp"
+                "named" to "retro-mcp"
             )
 
         })

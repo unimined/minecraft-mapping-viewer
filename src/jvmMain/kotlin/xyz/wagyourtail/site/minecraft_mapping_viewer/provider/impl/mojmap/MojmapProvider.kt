@@ -16,6 +16,7 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingService
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
 import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
@@ -59,7 +60,7 @@ object MojmapProvider : MappingPatchProvider("mojmap") {
 //        }
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         val realEnv = if (env == EnvType.SERVER) EnvType.SERVER else EnvType.CLIENT
         val (client, server) = availableVersions.get(mcVersion) ?: throw IllegalArgumentException("Invalid mcVersion")
         val url = if (env == EnvType.SERVER) server else client
@@ -88,7 +89,8 @@ object MojmapProvider : MappingPatchProvider("mojmap") {
             ContentProvider.of(
                 "mappings-$mcVersion-$realEnv.txt",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "mojmap"
         ).apply {
 
             requires("official")

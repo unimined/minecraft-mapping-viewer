@@ -15,6 +15,7 @@ import okio.source
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
@@ -40,7 +41,7 @@ object CalamusProvider : MappingPatchProvider("calamus") {
         return if (availableVersions.contains(mcVersion) || availableVersions.contains("$mcVersion-${env.name.lowercase()}")) null else emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         if (version != null) throw IllegalArgumentException("Invalid version")
         val realMcVersion = availableVersions.firstOrNull { it == mcVersion } ?: availableVersions.firstOrNull { it == "$mcVersion-${env.name.lowercase()}" } ?: throw IllegalArgumentException("Invalid mcVersion")
 
@@ -68,7 +69,8 @@ object CalamusProvider : MappingPatchProvider("calamus") {
             ContentProvider.of(
                 "calamus-intermediary-$realMcVersion-v2.jar",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "calamus"
         ).apply {
             provides("calamus" to false)
 

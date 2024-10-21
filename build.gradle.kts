@@ -1,6 +1,4 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
-import org.jetbrains.kotlin.gradle.utils.extendsFrom
 
 plugins {
     val kotlinVersion: String by System.getProperties()
@@ -14,8 +12,9 @@ version = "1.0.0-SNAPSHOT"
 group = "xyz.wagyourtail.site"
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    maven("https://maven.wagyourtail.xyz/snapshots")
+    mavenLocal()
 }
 
 // Versions
@@ -29,11 +28,9 @@ val mainClassName = "io.ktor.server.netty.EngineMain"
 kotlin {
     jvmToolchain(17)
     jvm {
-        withJava()
-        compilations.all {
-            kotlinOptions {
-                freeCompilerArgs = listOf("-Xjsr305=strict")
-            }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            freeCompilerArgs = listOf("-Xjsr305=strict")
         }
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         mainRun {
@@ -44,24 +41,13 @@ kotlin {
         browser {
             commonWebpackConfig {
                 outputFileName = "main.bundle.js"
+                sourceMaps = true
             }
-            runTask(Action {
-                devServer = KotlinWebpackConfig.DevServer(
-                    open = false,
-                    port = 3000,
-                    proxy = mutableMapOf(
-                        "/kv/*" to "http://localhost:9000",
-                        "/kvsse/*" to "http://localhost:9000",
-                        "/kvws/*" to mapOf("target" to "ws://localhost:9000", "ws" to true)
-                    ),
-                    static = mutableListOf("${layout.buildDirectory.asFile.get()}/processedResources/js/main"),
-                )
-            })
-            testTask(Action {
+            testTask {
                 useKarma {
                     useChromeHeadless()
                 }
-            })
+            }
         }
         binaries.executable()
     }
@@ -69,10 +55,11 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api("io.kvision:kvision-server-ktor-koin:$kvisionVersion")
-                implementation("xyz.wagyourtail.unimined.mapping:unimined-mapping-library:1.0.0")
-                implementation("io.github.oshai:kotlin-logging:6.0.1")
-                implementation("com.squareup.okio:okio:3.7.0")
-                implementation("com.sschr15.annotations:jb-annotations-kmp:24.1.0")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
+                api("xyz.wagyourtail.unimined.mapping:unimined-mapping-library:1.0.0-SNAPSHOT")
+
+                api("xyz.wagyourtail.commons:commons-kt:1.0.0-SNAPSHOT")
             }
         }
         val commonTest by getting {
@@ -89,10 +76,16 @@ kotlin {
                 implementation("io.ktor:ktor-server-compression:$ktorVersion")
                 implementation("io.ktor:ktor-server-caching-headers:$ktorVersion")
 
-                implementation("io.ktor:ktor-client-apache5:$ktorVersion")
-                implementation("ch.qos.logback:logback-classic:$logbackVersion")
+                implementation("io.ktor:ktor-client-core:$ktorVersion")
+                implementation("io.ktor:ktor-client-cio:$ktorVersion")
+                implementation("io.ktor:ktor-client-encoding:$ktorVersion")
+                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+
+                implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.55.0")
+
+                implementation("ch.qos.logback:logback-classic:$logbackVersion")
                 implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
             }
         }
@@ -116,6 +109,9 @@ kotlin {
                 implementation("io.kvision:kvision-tabulator:$kvisionVersion")
                 implementation("io.kvision:kvision-state:$kvisionVersion")
                 implementation("io.kvision:kvision-redux-kotlin:$kvisionVersion")
+                implementation("io.kvision:kvision-react:$kvisionVersion")
+                implementation("io.kvision:kvision-routing-navigo:$kvisionVersion")
+                implementation("io.kvision:kvision-chart:$kvisionVersion")
             }
         }
         val jsTest by getting {

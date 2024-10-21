@@ -9,30 +9,31 @@ import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.window
+import xyz.wagyourtail.commonskt.collection.defaultedMapOf
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTable
 import xyz.wagyourtail.site.minecraft_mapping_viewer.isMobile
-import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.info.InfoViewer.Companion.className
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.jvms.ext.FieldOrMethodDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.ext.FullyQualifiedName
 import xyz.wagyourtail.unimined.mapping.jvms.ext.NameAndDescriptor
 import xyz.wagyourtail.unimined.mapping.jvms.ext.annotation.Annotation
+import xyz.wagyourtail.unimined.mapping.jvms.ext.condition.AccessConditions
 import xyz.wagyourtail.unimined.mapping.jvms.four.AccessFlag
 import xyz.wagyourtail.unimined.mapping.jvms.four.three.two.ObjectType
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.one.InternalName
 import xyz.wagyourtail.unimined.mapping.jvms.four.two.two.UnqualifiedName
-import xyz.wagyourtail.unimined.mapping.tree.AbstractMappingTree
 import xyz.wagyourtail.unimined.mapping.tree.MemoryMappingTree
 import xyz.wagyourtail.unimined.mapping.tree.node.*
 import xyz.wagyourtail.unimined.mapping.tree.node._class.ClassNode
 import xyz.wagyourtail.unimined.mapping.tree.node._class.member.FieldNode
 import xyz.wagyourtail.unimined.mapping.tree.node._class.member.MethodNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.method.LocalNode
+import xyz.wagyourtail.unimined.mapping.tree.node._class.member.method.ParameterNode
 import xyz.wagyourtail.unimined.mapping.tree.node._constant.ConstantGroupNode
 import xyz.wagyourtail.unimined.mapping.tree.node._constant.ConstantNode
 import xyz.wagyourtail.unimined.mapping.tree.node._constant.TargetNode
 import xyz.wagyourtail.unimined.mapping.tree.node._package.PackageNode
-import xyz.wagyourtail.unimined.mapping.util.defaultedMapOf
 import xyz.wagyourtail.unimined.mapping.visitor.*
 import xyz.wagyourtail.unimined.mapping.visitor.delegate.*
 
@@ -370,9 +371,10 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
     val signatures by lazy {
         BetterTable("Signatures").also {
             it.head.row {
-                for (ns in namespaces) {
-                    header(ns.name)
-                }
+                header("Type")
+                header("Base Namespace")
+                header("Signature")
+                header("Namespaces")
             }
             div {
                 marginBottom = 5.px
@@ -403,6 +405,7 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
             it.head.row {
                 header("Type")
                 header("Value")
+                header("Conditions")
                 header("Namespaces")
             }
             div {
@@ -433,13 +436,16 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
 
         override fun visitSignature(
             delegate: SignatureParentVisitor<*>,
-            values: Map<Namespace, String>
+            value: String,
+            baseNs: Namespace,
+            namespaces: Set<Namespace>
         ): SignatureVisitor? {
             val body = signatures.firstBody ?: signatures.body {}
             body.row {
-                for (ns in namespaces) {
-                    cell(values[ns] ?: "-")
-                }
+                cell(type.name)
+                cell(baseNs.name)
+                cell(value)
+                cell(namespaces.joinToString { it.name })
             }
             return null
         }
@@ -465,26 +471,35 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
             delegate: AccessParentVisitor<*>,
             type: AccessType,
             value: AccessFlag,
+            conditions: AccessConditions,
             namespaces: Set<Namespace>
         ): AccessVisitor? {
             val body = access.firstBody ?: access.body {}
             body.row {
                 cell(type.name)
                 cell(value.toString())
+                cell(conditions.toString())
                 cell(namespaces.joinToString { it.name })
             }
             return null
         }
 
-        override fun visitComment(delegate: CommentParentVisitor<*>, values: Map<Namespace, String>): CommentVisitor? {
-            for ((ns, comment) in values.entries.sortedBy { namespaces.indexOf(it.key) }) {
-                byNamespace[ns].comments.add(p(sanitizeHtml(comment, null), rich = true))
+        override fun visitJavadoc(
+            delegate: JavadocParentNode<*>,
+            value: String,
+            baseNs: Namespace,
+            namespaces: Set<Namespace>
+        ): JavadocVisitor? {
+            for (ns in namespaces + baseNs) {
+                byNamespace[ns].comments.apply {
+                    p(sanitizeHtml(value, null), rich = true)
+                }
             }
             return null
         }
 
         override fun visitException(
-            delegate: MethodVisitor,
+            delegate: InvokableVisitor<*>,
             type: ExceptionType,
             exception: InternalName,
             baseNs: Namespace,
@@ -506,22 +521,22 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
         val tree = MemoryMappingTree()
         when (baseNode) {
             is ClassNode -> {
-                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), namespaces, false)
+                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), namespaces)
             }
             is MethodNode -> {
-                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), namespaces, false)
+                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), namespaces)
             }
             is FieldNode -> {
-                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), namespaces, false)
+                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), namespaces)
             }
-            is MethodNode.ParameterNode -> {
-                baseNode.acceptInner(DelegateParameterVisitor(MethodNode.ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces, false)
+            is ParameterNode<*> -> {
+                baseNode.acceptInner(DelegateParameterVisitor(ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces)
             }
-            is MethodNode.LocalNode -> {
-                baseNode.acceptInner(DelegateLocalVariableVisitor(MethodNode.LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces, false)
+            is LocalNode<*> -> {
+                baseNode.acceptInner(DelegateLocalVariableVisitor(LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces)
             }
             is PackageNode -> {
-                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), namespaces, false)
+                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), namespaces)
             }
             is ConstantNode, is TargetNode -> {}
             else -> {

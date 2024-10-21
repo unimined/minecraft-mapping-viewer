@@ -15,6 +15,7 @@ import okio.source
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
@@ -41,7 +42,7 @@ object IntermediaryProvider : MappingPatchProvider("intermediary") {
         return if (availableVersions.contains(mcVersion)) null else emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         if (!availableVersions.contains(mcVersion)) throw IllegalArgumentException("Invalid mcVersion")
         if (version != null) throw IllegalArgumentException("Invalid version")
 
@@ -69,7 +70,8 @@ object IntermediaryProvider : MappingPatchProvider("intermediary") {
             ContentProvider.of(
                 "intermediary-$mcVersion-v2.jar",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "intermediary"
         ).apply {
             provides("intermediary" to false)
         })

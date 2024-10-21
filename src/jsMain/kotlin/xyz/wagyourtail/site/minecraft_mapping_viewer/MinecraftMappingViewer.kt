@@ -25,6 +25,7 @@ import okio.use
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFReader
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFWriter
 import xyz.wagyourtail.unimined.mapping.tree.LazyMappingTree
+import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 val ENABLE_DEBUG = false
@@ -68,6 +69,7 @@ class MinecraftMappingViewer : Application() {
 
     val windowSize = ObservableValue(0 to 0)
 
+    @OptIn(ExperimentalTime::class)
     override fun start(state: Map<String, Any>) {
         window.addEventListener("resize", {
             windowSize.setState(window.innerWidth to window.innerHeight)
@@ -250,7 +252,7 @@ class MinecraftMappingViewer : Application() {
                     LOGGER.info { "applying patch \"$patchId\"" }
                     measureTime {
                         try {
-                            UMFReader.read(env, patch, mergedMappings)
+                            UMFReader.read(patch, mergedMappings)
                         } catch (e: Exception) {
                             e.printStackTrace()
                             LOGGER.error { "Failed to apply patch \"$patchId\"" }

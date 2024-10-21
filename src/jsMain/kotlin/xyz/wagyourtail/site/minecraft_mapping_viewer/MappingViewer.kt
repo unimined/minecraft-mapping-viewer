@@ -16,8 +16,10 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ConstantGroupViewer
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.PackageViewer
 import xyz.wagyourtail.unimined.mapping.tree.LazyMappingTree
+import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
+@OptIn(ExperimentalTime::class)
 class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
     init {
         width = 100.perc

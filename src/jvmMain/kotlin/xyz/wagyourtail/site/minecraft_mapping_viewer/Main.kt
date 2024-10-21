@@ -1,6 +1,7 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer
 
 import io.ktor.client.*
+import io.ktor.client.engine.cio.*
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -17,7 +18,7 @@ import java.nio.file.Path
 val CACHE_DIR = Path.of("mmv_cache/")
 
 
-val MMV_HTTP_CLIENT = HttpClient().apply {
+val MMV_HTTP_CLIENT = HttpClient(CIO).apply {
     headers {
         append(HttpHeaders.UserAgent, "MinecraftMappingViewer/2.0 <admin@wagyourtail.xyz>")
         append(HttpHeaders.Accept, "*")

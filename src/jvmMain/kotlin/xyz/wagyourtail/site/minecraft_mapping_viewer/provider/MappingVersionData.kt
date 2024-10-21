@@ -7,7 +7,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.*
 import io.ktor.utils.io.jvm.javaio.*
-import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -16,6 +15,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okio.buffer
 import okio.sink
+import xyz.wagyourtail.commonskt.utils.associateNonNull
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingInfo
@@ -31,14 +31,12 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.mojmap.Parchm
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.ornithe.CalamusProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.ornithe.FeatherProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
-import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.LauncherMeta
 import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.MCVersion
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFWriter
-import xyz.wagyourtail.unimined.mapping.propogator.PropogatorImpl
-import xyz.wagyourtail.unimined.mapping.util.associateNonNull
+import xyz.wagyourtail.unimined.mapping.propogator.Propagator
 import kotlin.io.path.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.measureTime
@@ -119,10 +117,7 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
         // not exists, or is older than 1 day
         if (!cacheFile.exists() || cacheFile.getLastModifiedTime().toMillis() < System.currentTimeMillis() - 1.days.inWholeMilliseconds) {
             measureTime {
-                val resolver = MappingResolverImpl("patch") {
-                    PropogatorImpl(Namespace("official"), this, setOf(mcJar))
-                        .propogate(provider.dstNs.map { Namespace(it) }.toSet())
-                }
+                val resolver = MappingResolverImpl("patch", mcJar)
 
                 getMappingPatchIntl(provider, version, resolver)
 
@@ -131,7 +126,7 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
                     val tree = resolver.resolve()
 
                     cacheFile.sink().buffer().use { buf ->
-                        tree.accept(UMFWriter.write(env, buf), (listOf("official") + provider.dstNs).toSet().map { Namespace(it) }, true)
+                        tree.accept(UMFWriter.write(env, buf, true), (listOf("official") + provider.dstNs).toSet().map { Namespace(it) })
                     }
                 }
             }.also {

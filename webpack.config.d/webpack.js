@@ -3,9 +3,10 @@ config.resolve.conditionNames = ['import', 'require', 'default'];
 
 if (config.devServer) {
     config.devServer.hot = true;
-    config.devServer.compress = false; // workaround for SSE
-    config.devServer.host = "0.0.0.0"
-    config.devServer.allowedHosts = "all"
+    config.devServer.open = false;
+    config.devServer.port = 3000;
+    config.devServer.historyApiFallback = true;
+    // config.devtool = 'eval-cheap-source-map';
 } else {
     config.devtool = undefined;
 }
@@ -13,6 +14,6 @@ if (config.devServer) {
 // disable bundle size warning
 config.performance = {
     assetFilter: function (assetFilename) {
-      return !assetFilename.endsWith('.js');
+        return !assetFilename.endsWith('.js');
     },
 };

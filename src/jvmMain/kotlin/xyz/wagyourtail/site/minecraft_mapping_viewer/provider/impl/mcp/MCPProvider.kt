@@ -15,6 +15,7 @@ import okio.source
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
@@ -55,7 +56,7 @@ object MCPProvider : MappingPatchProvider("mcp") {
         return availableVersions[mcVersion]?.second ?: emptyList()
     }
 
-    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolver) {
+    override fun getDataVersion(mcVersion: String, env: EnvType, version: String?, into: MappingResolverImpl) {
         val versions = availableVersions[mcVersion] ?: throw IllegalArgumentException("Invalid mcVersion")
         if (!versions.second.contains(version) || version == null) throw IllegalArgumentException("Invalid version")
 
@@ -86,7 +87,8 @@ object MCPProvider : MappingPatchProvider("mcp") {
             ContentProvider.of(
                 "mcp_$channel-$actualVersion-$actualMcVersion.zip",
                 cacheFile.inputStream().source().buffer()
-            )
+            ),
+            "mcp"
         ).apply {
 
             requires("searge")
