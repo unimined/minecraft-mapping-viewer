@@ -483,14 +483,12 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
             }
             return null
         }
-
         override fun visitJavadoc(
             delegate: JavadocParentNode<*>,
             value: String,
-            baseNs: Namespace,
             namespaces: Set<Namespace>
         ): JavadocVisitor? {
-            for (ns in namespaces + baseNs) {
+            for (ns in namespaces) {
                 byNamespace[ns].comments.apply {
                     p(sanitizeHtml(value, null), rich = true)
                 }

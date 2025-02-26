@@ -1,5 +1,6 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs
 
+import io.kvision.core.Cursor
 import io.kvision.core.Overflow
 import io.kvision.core.style
 import io.kvision.html.div
@@ -24,6 +25,7 @@ class PackageViewer(val mappings: MappingViewer) : FasterSplitPanel(direction = 
             style(".pkg-row") {
                 setStyle("content-visibility", "auto")
                 setStyle("contain-intrinsic-height", "auto 41px")
+                cursor = Cursor.POINTER
             }
         }
     }

@@ -13,6 +13,7 @@ group = "xyz.wagyourtail.site"
 
 repositories {
     mavenCentral()
+    maven("https://maven.wagyourtail.xyz/releases")
     maven("https://maven.wagyourtail.xyz/snapshots")
     mavenLocal()
 }
@@ -26,9 +27,8 @@ val logbackVersion: String by project
 val mainClassName = "io.ktor.server.netty.EngineMain"
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
     jvm {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
         }

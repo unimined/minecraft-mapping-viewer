@@ -3,6 +3,7 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer.improved
 import io.kvision.core.*
 import io.kvision.html.CustomTag
 import io.kvision.html.div
+import io.kvision.utils.obj
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.document
@@ -88,16 +89,20 @@ class BetterTable(className: String? = null, val selectRow: Boolean = true) : Cu
                     }
                 }
 
+                val mouseUpHandler: (Event?) -> Unit = {
+                    if (it != null && it is MouseEvent) {
+                        document.removeEventListener("mousemove", mouseMoveHandler)
+                    }
+                }
+
                 onEvent {
                     mousedown = { event ->
                         if (event.target != null && event.target is HTMLElement) {
                             x = event.clientX
                             width = (event.target as HTMLElement).parentElement!!.getBoundingClientRect().width
                             document.addEventListener("mousemove", mouseMoveHandler)
+                            document.addEventListener("mouseup", mouseUpHandler, obj { once = true })
                         }
-                    }
-                    mouseup = {
-                        document.removeEventListener("mousemove", mouseMoveHandler)
                     }
                 }
             }

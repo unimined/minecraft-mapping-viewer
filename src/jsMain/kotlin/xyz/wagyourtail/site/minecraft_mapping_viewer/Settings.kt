@@ -16,6 +16,7 @@ import io.kvision.panel.hPanel
 import io.kvision.panel.vPanel
 import io.kvision.state.ObservableSetWrapper
 import io.kvision.state.ObservableValue
+import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.localStorage
@@ -154,7 +155,8 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
                                         value = info.versions.first()
                                     ) {
                                         margin = 10.px
-                                        paddingRight = 15.px
+                                        paddingRight = 30.px
+                                        width = auto
                                     }
                                 } else {
                                     ObservableValue(null)

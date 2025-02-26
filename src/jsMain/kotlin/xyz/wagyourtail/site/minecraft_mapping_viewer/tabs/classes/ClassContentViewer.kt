@@ -1,6 +1,8 @@
 package xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.classes
 
+import io.kvision.core.Cursor
 import io.kvision.core.Overflow
+import io.kvision.core.style
 import io.kvision.html.Div
 import io.kvision.html.div
 import io.kvision.panel.Direction
@@ -24,7 +26,6 @@ import xyz.wagyourtail.unimined.mapping.tree.node._class.member.method.LocalNode
 import xyz.wagyourtail.unimined.mapping.tree.node._class.member.method.ParameterNode
 
 class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) : Div() {
-
     init {
         height = 100.perc
     }
@@ -140,7 +141,9 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
                     it.hasDescriptor() &&
                     it.names.keys.intersect(field.names.keys).let { nss -> nss.isNotEmpty() && nss.all { ns -> field.names[ns] == it.names[ns] }}
             }) continue
-            fieldBody.row(data = field) {
+            fieldBody.row(data = field, className = "content-row") {
+                cursor = Cursor.POINTER
+
                 for (name in this@ClassContentViewer.namespaces) {
                     cell(field.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), field.getDescriptor(name)).value } ?: "-")
                 }
@@ -160,7 +163,9 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
 
         val methodBody = methodList.body {}
         for (method in classNode.methods.resolve()) {
-            methodBody.row(data = method) {
+            methodBody.row(data = method, className = "content-row") {
+                cursor = Cursor.POINTER
+
                 for (name in this@ClassContentViewer.namespaces) {
                     cell(method.getName(name)?.let { NameAndDescriptor(UnqualifiedName.unchecked(it), method.getDescriptor(name)).value } ?: "-")
                 }
@@ -284,7 +289,9 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
 
             val paramBody = paramList.body {}
             for (param in method.params.resolve()) {
-                paramBody.row(data = param) {
+                paramBody.row(data = param, className = "content-row") {
+                    cursor = Cursor.POINTER
+
                     cell(param.index?.toString() ?: "-")
                     cell(param.lvOrd?.toString() ?: "-")
                     for (name in this@ClassContentViewer.namespaces) {
@@ -307,7 +314,9 @@ class ClassContentViewer(val namespaces: List<Namespace>, classNode: ClassNode) 
             }
             val localBody = localList.body {}
             for (local in method.locals) {
-                localBody.row(data = local) {
+                localBody.row(data = local, className = "content-row") {
+                    cursor = Cursor.POINTER
+
                     cell(local.lvOrd.toString() ?: "-")
                     cell(local.startOp?.toString() ?: "-")
                     for (name in this@ClassContentViewer.namespaces) {
