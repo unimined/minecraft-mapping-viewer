@@ -30,7 +30,7 @@ object RetroMCPProvider : MappingPatchProvider("retro-mcp") {
     val LOGGER = KotlinLogging.logger {  }
 
     override val srcNs: String = "official"
-    override val dstNs: List<String> = listOf("mcp")
+    override val dstNs: List<String> = listOf("retro-mcp")
 
 
     val availableVersions by ExpiringDelegate {

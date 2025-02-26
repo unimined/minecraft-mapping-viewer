@@ -21,6 +21,7 @@ import io.kvision.toolbar.toolbar
 import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
+import kotlinx.browser.window
 
 class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyContent.SPACEBETWEEN, wrap = FlexWrap.WRAP, className = BsBgColor.BODYTERTIARY.className) {
 
@@ -33,7 +34,7 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
         display = Display.INLINEBLOCK
     }
 
-    val settingsVisible = ObservableValue(false)
+    val settingsVisible = ObservableValue(!window.isMobile())
 
     @OptIn(ExperimentalStdlibApi::class)
     val searchType = SelectInput(

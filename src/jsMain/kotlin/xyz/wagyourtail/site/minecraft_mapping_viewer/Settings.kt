@@ -6,10 +6,7 @@ import io.kvision.core.*
 import io.kvision.form.check.checkBox
 import io.kvision.form.select.select
 import io.kvision.form.select.selectInput
-import io.kvision.html.ButtonStyle
-import io.kvision.html.Div
-import io.kvision.html.button
-import io.kvision.html.div
+import io.kvision.html.*
 import io.kvision.panel.FlexPanel
 import io.kvision.panel.VPanel
 import io.kvision.panel.hPanel
@@ -33,7 +30,11 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
     val LOGGER by KotlinLogging.logger()
     init {
         whiteSpace = WhiteSpace.NOWRAP
-        +("Settings")
+        h3 {
+            +"Settings"
+
+            textAlign = TextAlign.CENTER
+        }
     }
 
     private val versions = ObservableValue<List<VersionInfo>?>(null)
@@ -42,6 +43,10 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
         AppScope.launch {
             LOGGER.info { "requesting versions..." }
             versions.setState(Model.requestVersions())
+        }
+
+        app.titlebar.settingsVisible.subscribe {
+            display = if (it) null else Display.NONE
         }
     }
 
