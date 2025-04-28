@@ -37,7 +37,7 @@ fun AbstractMappingTree.filterClassByQuery(query: String, type: SearchType = Sea
                     names: Map<Namespace, Pair<String, FieldDescriptor?>>
                 ): FieldVisitor? {
                     if (type == SearchType.KEYWORD || type == SearchType.FIELD) {
-                        if (ret || names.values.any { it.first.contains(q) }) {
+                        if (ret || names.values.any { it.first.contains(q) || (q.contains(";") && "${it.first};${it.second}".contains(q)) }) {
                             ret = true
                             return null
                         }
@@ -50,7 +50,7 @@ fun AbstractMappingTree.filterClassByQuery(query: String, type: SearchType = Sea
                     names: Map<Namespace, Pair<String, MethodDescriptor?>>
                 ): MethodVisitor? {
                     if (type == SearchType.KEYWORD || type == SearchType.METHOD) {
-                        if (ret || names.values.any { it.first.contains(q) }) {
+                        if (ret || names.values.any { it.first.contains(q) || (q.contains(";") && "${it.first};${it.second}".contains(q)) }) {
                             ret = true
                             return null
                         }

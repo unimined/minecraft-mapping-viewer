@@ -12,6 +12,9 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingVersionData
 import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.LauncherMeta
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
+import xyz.wagyourtail.unimined.mapping.Namespace
+import xyz.wagyourtail.unimined.mapping.propagator.CachedInheritanceTree
+import xyz.wagyourtail.unimined.mapping.tree.LazyMappingTree
 import kotlin.time.Duration.Companion.days
 import kotlin.time.toJavaDuration
 
@@ -61,4 +64,9 @@ actual class MappingService : IMappingService {
     ): String {
         return versionProviders[mcVersion to envType].mappingPatches[mapping to version]
     }
+
+    override suspend fun requestInheritance(mcVersion: String ,evnType: EnvType): String {
+        return versionProviders[mcVersion to evnType].inheritanceTree
+    }
+
 }

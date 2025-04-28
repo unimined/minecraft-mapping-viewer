@@ -131,7 +131,7 @@ class ConstantContentViewer(val namespaces: List<Namespace>, constantGroupNode: 
         val targetBody = targetList.body {}
         for (target in constantGroupNode.targets) {
             targetBody.row(data = target) {
-                cell(target.target.value)
+                cell(target.target?.value ?: "-")
                 cell(target.paramIdx?.toString() ?: "-")
             }
         }

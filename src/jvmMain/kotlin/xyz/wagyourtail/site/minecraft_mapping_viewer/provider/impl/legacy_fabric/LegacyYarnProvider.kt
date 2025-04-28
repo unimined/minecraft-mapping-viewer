@@ -93,9 +93,7 @@ object LegacyYarnProvider : MappingPatchProvider("legacy-yarn") {
                 "intermediary" to "legacy-intermediary",
             )
 
-            into.afterLoad.add {
-                renest("legacy-intermediary", "legacy-yarn")
-            }
+            renest()
 
         })
     }

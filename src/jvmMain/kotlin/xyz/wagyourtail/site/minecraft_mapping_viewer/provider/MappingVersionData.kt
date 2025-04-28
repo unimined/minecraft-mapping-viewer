@@ -5,7 +5,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.util.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -15,6 +14,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okio.buffer
 import okio.sink
+import okio.source
+import xyz.wagyourtail.commonskt.reader.StringCharReader
 import xyz.wagyourtail.commonskt.utils.associateNonNull
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
@@ -33,10 +34,15 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.ornithe.Feath
 import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.site.minecraft_mapping_viewer.sources.meta.MCVersion
 import xyz.wagyourtail.site.minecraft_mapping_viewer.util.ExpiringDelegate
+import xyz.wagyourtail.site.minecraft_mapping_viewer.util.SoftDelegate
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 import xyz.wagyourtail.unimined.mapping.formats.umf.UMFWriter
+import xyz.wagyourtail.unimined.mapping.propagator.CachedInheritanceTree
+import xyz.wagyourtail.unimined.mapping.propagator.InheritanceTree
 import xyz.wagyourtail.unimined.mapping.propogator.Propagator
+import xyz.wagyourtail.unimined.mapping.tree.AbstractMappingTree
+import xyz.wagyourtail.unimined.mapping.tree.LazyMappingTree
 import kotlin.io.path.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.measureTime
@@ -104,6 +110,12 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
             getMappingPatch(id, version)
         }
 
+    val inheritanceTree by SoftDelegate {
+        buildString {
+            CachedInheritanceTree.write(getInheritanceTree(LazyMappingTree(), Namespace("official"))) { append(it) }
+        }
+    }
+
     private fun getMappingPatch(mappingId: String, version: String?): String {
         val provider = providers[mappingId] ?: throw IllegalArgumentException("Invalid mappingId")
 
@@ -117,7 +129,7 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
         // not exists, or is older than 1 day
         if (!cacheFile.exists() || cacheFile.getLastModifiedTime().toMillis() < System.currentTimeMillis() - 1.days.inWholeMilliseconds) {
             measureTime {
-                val resolver = MappingResolverImpl("patch", mcJar)
+                val resolver = MappingResolverImpl("patch", ::getInheritanceTree)
 
                 getMappingPatchIntl(provider, version, resolver)
 
@@ -126,7 +138,7 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
                     val tree = resolver.resolve()
 
                     cacheFile.sink().buffer().use { buf ->
-                        tree.accept(UMFWriter.write(env, buf, true), (listOf("official") + provider.dstNs).toSet().map { Namespace(it) })
+                        tree.accept(UMFWriter.write(env, buf, true), (listOf("official") + provider.dstNs).toSet().map { Namespace(it) }, true)
                     }
                 }
             }.also {
@@ -146,6 +158,31 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
         }
 
         provider.getDataVersion(mcVersion.id, env, version, resolver)
+    }
+
+    fun getInheritanceTree(tree: AbstractMappingTree, fns: Namespace): InheritanceTree {
+        val cache = CACHE_DIR.resolve("inheritance-tree/${mcVersion.id}/${env.name}.umf_it")
+
+        if (!cache.exists()) {
+            val itree: InheritanceTree
+            measureTime {
+                runBlocking {
+                    itree = Propagator(tree, fns, setOf(mcJar))
+                    cache.createParentDirectories()
+                    cache.sink().buffer().use { writer ->
+                        CachedInheritanceTree.write(itree, writer::writeUtf8)
+                    }
+                }
+            }.also {
+                LOGGER.info { "Took $it to read inheritance tree for ${mcVersion.id}/${env.name}" }
+            }
+            return itree
+        } else {
+            LOGGER.info { "Using cached inheritance tree for ${mcVersion.id}/${env.name}" }
+            return CachedInheritanceTree(tree, StringCharReader(cache.source().buffer().use { it.readUtf8() })).also {
+                require(it.fns == fns)
+            }
+        }
     }
 
 }

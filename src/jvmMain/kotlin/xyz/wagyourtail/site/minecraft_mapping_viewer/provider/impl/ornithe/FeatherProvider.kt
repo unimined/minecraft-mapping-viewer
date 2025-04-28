@@ -106,9 +106,7 @@ object FeatherProvider : MappingPatchProvider("feather") {
                 "source" to "feather",
             )
 
-            into.afterLoad.add {
-                renest("calamus", "feather")
-            }
+            renest()
 
         })
     }

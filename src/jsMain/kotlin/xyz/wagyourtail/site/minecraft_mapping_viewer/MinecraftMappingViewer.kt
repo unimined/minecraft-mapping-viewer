@@ -161,6 +161,8 @@ class MinecraftMappingViewer : Application() {
                                 height = 90.perc
                                 width = 1.px
                                 background = Background(Color.name(Col.GRAY))
+                                marginLeft = 5.px
+                                marginRight = 5.px
                             }
 
                             div {

@@ -362,7 +362,7 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
                         paddingRight = 5.px
                         whiteSpace = WhiteSpace.NOWRAP
                     }
-                    scrollCopyContainer(targetNode.root.map(cgn.baseNs, name, fqn).toString())
+                    scrollCopyContainer(fqn?.let { targetNode.root.map(cgn.baseNs, name, it) }.toString())
                 }
             }
         }
@@ -516,25 +516,24 @@ open class InfoViewer(val namespaces: List<Namespace>, val baseNode: BaseNode<*,
     }
 
     init {
-        val tree = MemoryMappingTree()
         when (baseNode) {
             is ClassNode -> {
-                baseNode.acceptInner(DelegateClassVisitor(ClassNode(tree), delegator), namespaces)
+                baseNode.acceptInner(DelegateClassVisitor(EmptyClassVisitor(), delegator), namespaces, true)
             }
             is MethodNode -> {
-                baseNode.acceptInner(DelegateMethodVisitor(MethodNode(ClassNode(tree)), delegator), namespaces)
+                baseNode.acceptInner(DelegateMethodVisitor(EmptyMethodVisitor(), delegator), namespaces, true)
             }
             is FieldNode -> {
-                baseNode.acceptInner(DelegateFieldVisitor(FieldNode(ClassNode(tree)), delegator), namespaces)
+                baseNode.acceptInner(DelegateFieldVisitor(EmptyFieldVisitor(), delegator), namespaces, true)
             }
             is ParameterNode<*> -> {
-                baseNode.acceptInner(DelegateParameterVisitor(ParameterNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces)
+                baseNode.acceptInner(DelegateParameterVisitor(EmptyParameterVisitor(), delegator), namespaces, true)
             }
             is LocalNode<*> -> {
-                baseNode.acceptInner(DelegateLocalVariableVisitor(LocalNode(MethodNode(ClassNode(tree)), -1, -1), delegator), namespaces)
+                baseNode.acceptInner(DelegateLocalVariableVisitor(EmptyLocalVariableVisitor(), delegator), namespaces, true)
             }
             is PackageNode -> {
-                baseNode.acceptInner(DelegatePackageVisitor(PackageNode(tree), delegator), namespaces)
+                baseNode.acceptInner(DelegatePackageVisitor(EmptyPackageVisitor(), delegator), namespaces, true)
             }
             is ConstantNode, is TargetNode -> {}
             else -> {

@@ -100,9 +100,7 @@ object YarnProvider : MappingPatchProvider("yarn") {
                 )
             }
 
-            into.afterLoad.add {
-                renest("intermediary", "yarn")
-            }
+            renest()
 
         })
     }

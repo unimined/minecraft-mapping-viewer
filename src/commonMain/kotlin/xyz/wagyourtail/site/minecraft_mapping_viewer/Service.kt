@@ -24,4 +24,7 @@ interface IMappingService {
     @KVBinding(Method.GET, "mappingPatches")
     suspend fun requestMappingPatch(mcVersion: String, envType: EnvType, mapping: String, version: String?): String
 
+    @KVBinding(Method.GET, "inheritance")
+    suspend fun requestInheritance(mcVersion: String, evnType: EnvType): String
+
 }
