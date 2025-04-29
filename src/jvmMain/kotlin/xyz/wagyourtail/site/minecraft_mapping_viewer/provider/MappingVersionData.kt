@@ -20,6 +20,8 @@ import xyz.wagyourtail.commonskt.utils.associateNonNull
 import xyz.wagyourtail.site.minecraft_mapping_viewer.CACHE_DIR
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MMV_HTTP_CLIENT
 import xyz.wagyourtail.site.minecraft_mapping_viewer.MappingInfo
+import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.babric.BabricIntermediaryProvider
+import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.babric.BarnProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.fabric.IntermediaryProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.fabric.YarnProvider
 import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.impl.legacy_fabric.LegacyIntermediaryProvider
@@ -59,6 +61,8 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
             YarnProvider,
             LegacyIntermediaryProvider,
             LegacyYarnProvider,
+            BabricIntermediaryProvider,
+            BarnProvider,
             CalamusProvider,
             FeatherProvider,
             SeargeProvider,
