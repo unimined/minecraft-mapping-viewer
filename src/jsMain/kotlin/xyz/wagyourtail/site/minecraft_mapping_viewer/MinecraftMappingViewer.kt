@@ -233,15 +233,21 @@ class MinecraftMappingViewer : Application() {
                 var patches: Map<Pair<String, String?>, String>
                 measureTime {
                     val newPatches = selected.map { entry ->
-                        val mappings = entry.key
-                        val version = entry.value
-                        mappingViewer.loadingMessage.value = "Requesting Mapping $mappings${if(version == null) "" else "-$version"} (${++count} / ${selected.size})"
-                        mappings to version to Model.requestMappingPatch(
-                            mcVers,
-                            env,
-                            mappings,
-                            version
-                        )
+                        try {
+                            val mappings = entry.key
+                            val version = entry.value
+                            mappingViewer.loadingMessage.value =
+                                "Requesting Mapping $mappings${if (version == null) "" else "-$version"} (${++count} / ${selected.size})"
+                            mappings to version to Model.requestMappingPatch(
+                                mcVers,
+                                env,
+                                mappings,
+                                version
+                            )
+                        } catch (t: Throwable) {
+                            mappingViewer.showError(t)
+                            throw t
+                        }
                     }
                     patches = newPatches.toMap()
                 }.also {

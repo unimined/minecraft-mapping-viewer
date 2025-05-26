@@ -5,12 +5,19 @@ import io.github.oshai.kotlinlogging.logger
 import io.kvision.core.AlignContent
 import io.kvision.core.FlexDirection
 import io.kvision.core.JustifyContent
+import io.kvision.core.PElement
+import io.kvision.core.style
+import io.kvision.html.br
 import io.kvision.html.div
 import io.kvision.html.h4
+import io.kvision.html.p
 import io.kvision.panel.StackPanel
 import io.kvision.panel.flexPanel
 import io.kvision.state.ObservableValue
+import io.kvision.utils.em
 import io.kvision.utils.perc
+import io.kvision.utils.px
+import io.kvision.utils.rem
 import xyz.wagyourtail.site.minecraft_mapping_viewer.import.ImportExportView
 import xyz.wagyourtail.site.minecraft_mapping_viewer.improved.BetterTabPanel
 import xyz.wagyourtail.site.minecraft_mapping_viewer.tabs.ClassViewer
@@ -46,7 +53,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
         add(it)
     }
 
-    private val nothing = div("No mappings loaded")
+    private val errorText = div("No mappings loaded")
 
     private val loadingDiv = flexPanel(justify = JustifyContent.CENTER, alignContent = AlignContent.CENTER) {
         width = 100.perc
@@ -139,7 +146,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
                     if (map == null || (!map.packagesIter().hasNext() && !map.classesIter().hasNext() && !map.constantGroupsIter().hasNext())) {
                         LOGGER.info { "Mappings are empty!" }
-                        activeChild = nothing
+                        activeChild = errorText
                     } else {
                         activeChild = tabs
                     }
@@ -183,6 +190,21 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
             LOGGER.info { "Switching to tabs" }
             activeChild = tabs
         }
+    }
+
+    fun showError(t: Throwable) {
+        errorText.removeAll()
+        errorText.apply {
+            val iter = t.stackTraceToString().split("\n").iterator()
+            +iter.next()
+            for (line in iter) {
+                p(line) {
+                    marginLeft = 2.rem
+                    marginBottom = 0.px
+                }
+            }
+        }
+        activeChild = errorText
     }
 
 }

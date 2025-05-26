@@ -47,7 +47,12 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
     init {
         AppScope.launch {
             LOGGER.info { "requesting versions..." }
-            versions.setState(Model.requestVersions())
+            try {
+                versions.setState(Model.requestVersions())
+            } catch (t: Throwable) {
+                app.mappingViewer.showError(t)
+                throw t
+            }
         }
 
         app.titlebar.settingsVisible.subscribe {
@@ -248,7 +253,12 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
         AppScope.launch {
             LOGGER.info { "requesting available mappings ${mcVersion.value}..." }
             availableMappings.setState(emptyMap())
-            availableMappings.setState(Model.availableMappings(mcVersion.value ?: return@launch, getEnv()))
+            try {
+                availableMappings.setState(Model.availableMappings(mcVersion.value ?: return@launch, getEnv()))
+            } catch (t: Throwable) {
+                app.mappingViewer.showError(t)
+                throw t
+            }
         }
     }
 
