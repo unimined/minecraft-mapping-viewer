@@ -26,5 +26,5 @@ inline fun <reified T> writeParamValue(key: String, value: T) {
         params[key] = Json.encodeToString(value)
     }
     val newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + params.toString() + window.location.hash
-    window.history.pushState("update", "", newurl)
+    window.history.replaceState("update", "", newurl)
 }
