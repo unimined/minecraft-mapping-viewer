@@ -228,14 +228,14 @@ class MinecraftMappingViewer : Application() {
                 val mc = env to mcVers
                 var baseMappings: String
 
-                LOGGER.info { "requesting patches..." }
+                mappingViewer.loadingMessage.value = "Requesting Mappings"
                 var count = 0
                 var patches: Map<Pair<String, String?>, String>
                 measureTime {
                     val newPatches = selected.map { entry ->
                         val mappings = entry.key
                         val version = entry.value
-                        count++
+                        mappingViewer.loadingMessage.value = "Requesting Mapping $mappings${if(version == null) "" else "-$version"} (${++count} / ${selected.size})"
                         mappings to version to Model.requestMappingPatch(
                             mcVers,
                             env,
@@ -245,23 +245,29 @@ class MinecraftMappingViewer : Application() {
                     }
                     patches = newPatches.toMap()
                 }.also {
-                    LOGGER.info { "$count new patches received in $it" }
+                    mappingViewer.loadingMessage.value = "$count new patches received in $it"
                 }
 
                 val mergedMappings = LazyMappingTree()
 
-                for ((patchId, patch) in patches.entries) {
-                    LOGGER.info { "applying patch \"$patchId\"" }
-                    measureTime {
-                        try {
-                            UMFReader.read(patch, mergedMappings)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            LOGGER.error { "Failed to apply patch \"$patchId\"" }
+                count = 0
+                measureTime {
+                    for ((patchId, patch) in patches.entries) {
+                        mappingViewer.loadingMessage.value =
+                            "applying patch \"$patchId\" (${++count} / ${patches.size})"
+                        measureTime {
+                            try {
+                                UMFReader.read(patch, mergedMappings)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                LOGGER.error { "Failed to apply patch \"$patchId\"" }
+                            }
+                        }.also {
+                            LOGGER.info { "patch \"$patchId\" applied in $it" }
                         }
-                    }.also {
-                        LOGGER.info { "patch \"$patchId\" applied in $it" }
                     }
+                }.also {
+                    mappingViewer.loadingMessage.value = "Loaded ${patches.size} patches in $it"
                 }
 
                 LOGGER.debug {

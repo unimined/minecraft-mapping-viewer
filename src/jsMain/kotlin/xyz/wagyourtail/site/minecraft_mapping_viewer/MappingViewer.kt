@@ -6,6 +6,7 @@ import io.kvision.core.AlignContent
 import io.kvision.core.FlexDirection
 import io.kvision.core.JustifyContent
 import io.kvision.html.div
+import io.kvision.html.h4
 import io.kvision.panel.StackPanel
 import io.kvision.panel.flexPanel
 import io.kvision.state.ObservableValue
@@ -30,6 +31,12 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
     val loading = ObservableValue(false)
 
+    val loadingMessage = ObservableValue("Loading...").apply {
+        subscribe {
+            LOGGER.info { it }
+        }
+    }
+
     private var tabs = BetterTabPanel(className = "mapping-viewer") {
         width = 100.perc
         height = 100.perc
@@ -46,12 +53,21 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
         height = 100.perc
 
         flexPanel(direction = FlexDirection.COLUMN, justify = JustifyContent.CENTER, alignContent = AlignContent.CENTER) {
-            div(className = "lds-ellipsis") {
-                io.kvision.require("css/lds-ellipsis.css")
-                div()
-                div()
-                div()
-                div()
+            flexPanel(justify = JustifyContent.CENTER, alignContent = AlignContent.CENTER) {
+                div(className = "lds-ellipsis") {
+                    io.kvision.require("css/lds-ellipsis.css")
+                    div()
+                    div()
+                    div()
+                    div()
+                }
+            }
+
+            h4 {
+                loadingMessage.subscribe {
+                    removeAll()
+                    +it
+                }
             }
         }
     }
@@ -63,12 +79,12 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
     init {
         loading.subscribe {
             if (it) {
-                LOGGER.info { "Loading Started" }
+                loadingMessage.value = "Loading Started"
                 singleRender {
                     activeChild = loadingDiv
                 }
             } else {
-                LOGGER.info { "Loading Ended" }
+                loadingMessage.value = "Loading Ended"
             }
         }
 
@@ -140,7 +156,8 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
             val type = SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
             if (prevQuery == type to query) return@subscribe
             prevQuery = type to query
-            LOGGER.info { "Updating classes tab for query: $query" }
+            loading.setState(true)
+            loadingMessage.value = "Searching: $query"
             activeChild = loadingDiv
             measureTime {
                 classesTab.update(
@@ -154,6 +171,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                 LOGGER.info { "finished updating search in $it" }
                 activeChild = tabs
             }
+            loading.setState(false)
         }
     }
 
