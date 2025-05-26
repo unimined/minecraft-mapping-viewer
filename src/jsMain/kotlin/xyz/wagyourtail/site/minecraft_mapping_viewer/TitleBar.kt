@@ -4,8 +4,10 @@ import io.kvision.core.BsBgColor
 import io.kvision.core.Display
 import io.kvision.core.FlexWrap
 import io.kvision.core.JustifyContent
+import io.kvision.core.onEvent
 import io.kvision.form.select.SelectInput
 import io.kvision.form.select.TomSelectCallbacks
+import io.kvision.form.text.TextInput
 import io.kvision.form.text.TomTypeahead
 import io.kvision.html.Autocomplete
 import io.kvision.html.button
@@ -22,6 +24,14 @@ import io.kvision.utils.auto
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import kotlinx.browser.window
+import react.dom.aria.AriaRole.Companion.toolbar
+import web.cssom.HtmlAttributes.Companion.value
+import web.cssom.PropertyName.Companion.marginRight
+import web.cssom.PropertyName.Companion.paddingRight
+import web.cssom.PropertyName.Companion.paddingTop
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.RetainedObservableValue
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.readParamValue
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.writeParamValue
 
 class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyContent.SPACEBETWEEN, wrap = FlexWrap.WRAP, className = BsBgColor.BODYTERTIARY.className) {
 
@@ -44,28 +54,42 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
         setAttribute("aria-label", "Search Type")
     }
 
-    val typeahead = TomTypeahead {
+    val searchValue = RetainedObservableValue.fromParams<String>("q",  { "" }).apply {
+
+        subscribe {
+            writeParamValue("q", it)
+        }
+
+        searchType.subscribe {
+            value = value
+        }
+    }
+
+    val search = TextInput {
         width = 300.px
         marginBottom = 0.px
         autocomplete = Autocomplete.OFF
 
-        input.setAttribute("aria-label", "Search Box")
+        setAttribute("aria-label", "Search Box")
+//
+//        tsCallbacks = TomSelectCallbacks(
+//            shouldLoad = { query ->
+//                query.length >= 3
+//            },
+//            load = { query, callback ->
+//                //app.mappingViewer.mappings.value.getAutocompleteResults(query, searchType.value)
+//                callback(emptyArray())
+//            },
+//        )
 
-        tsCallbacks = TomSelectCallbacks(
-            shouldLoad = { query ->
-                query.length >= 3
-            },
-            load = { query, callback ->
-                //app.mappingViewer.mappings.value.getAutocompleteResults(query, searchType.value)
-                callback(emptyArray())
-            },
-        )
+        value = searchValue.value
 
-        searchType.subscribe {
-            input.tomSelectJs?.clearOptions()
-
-            // re-trigger typeahead's subscribers
-            setValue(value)
+        onEvent {
+            keyup = {
+                if (it.key == "Enter") {
+                    searchValue.value = value ?: ""
+                }
+            }
         }
     }
 
@@ -91,7 +115,7 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
         flexPanel(wrap = FlexWrap.WRAP) {
             div {
                 paddingRight = 10.px
-                add(typeahead)
+                add(search)
             }
 
             div {
@@ -103,7 +127,7 @@ class TitleBar(val app: MinecraftMappingViewer) : FlexPanel(justify = JustifyCon
 
                         marginRight = 10.px
                         onClick {
-                            typeahead.setState(typeahead.value)
+                            searchValue.value = search.value ?: ""
                         }
                     }
 

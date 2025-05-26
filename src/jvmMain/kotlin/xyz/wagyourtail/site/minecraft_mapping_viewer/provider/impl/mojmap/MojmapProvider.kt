@@ -20,7 +20,6 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.provider.MappingPatchProvid
 import xyz.wagyourtail.site.minecraft_mapping_viewer.resolver.MappingResolverImpl
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.resolver.ContentProvider
-import xyz.wagyourtail.unimined.mapping.resolver.MappingResolver
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.time.measureTime

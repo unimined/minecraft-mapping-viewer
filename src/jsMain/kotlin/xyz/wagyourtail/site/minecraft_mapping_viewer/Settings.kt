@@ -20,6 +20,11 @@ import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.*
+import xyz.wagyourtail.site.minecraft_mapping_viewer.Model.availableMappings
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.readParamValue
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.readStorageValue
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.writeParamValue
+import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.writeStorageValue
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 
@@ -60,6 +65,11 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
 
     private val snapshots = checkBox(label = "Snapshots") {
         margin = 10.px
+
+        value = readStorageValue("snapshots") ?: false
+        subscribe {
+            writeStorageValue("snapshots", it)
+        }
     }
 
     init {
@@ -120,6 +130,9 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
         }
         mcVersion.subscribe {
             LOGGER.info { "mcVersion changed: $it (${mcVersionCompare(it ?: "", "1.2.5")})" }
+            if (it != null) {
+                writeParamValue("MCV", it)
+            }
             if (mcVersionCompare(it ?: return@subscribe, "1.2.5") < 0) {
                 envType.setState(EnvType.JOINED.name)
                 envType.options = EnvType.entries.map { it.name to it.name }
@@ -225,7 +238,9 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
     fun updateVersions() {
         mcVersion.options = versions.value?.filter { it.release || snapshots.value }?.map { it.id to it.id }
         if (mcVersion.value == null) {
-            mcVersion.value = mcVersion.options?.firstOrNull()?.first
+            if (!mcVersion.options.isNullOrEmpty()) {
+                mcVersion.value = readParamValue<String>("MCV") ?: mcVersion.options?.firstOrNull()?.first
+            }
         }
     }
 

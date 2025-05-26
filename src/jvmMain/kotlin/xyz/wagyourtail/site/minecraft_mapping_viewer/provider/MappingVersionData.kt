@@ -146,7 +146,13 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
                     val tree = resolver.resolve()
 
                     cacheFile.sink().buffer().use { buf ->
-                        tree.accept(UMFWriter.write(env, buf, true), (listOf("official") + provider.dstNs).toSet().map { Namespace(it) }, true)
+                        val writer = UMFWriter.write(env, buf, true)
+                        val namespaces = (listOf("official") + provider.dstNs).toSet().map { Namespace(it) }
+                        if (tree is LazyMappingTree) {
+                            tree.lazyAccept(writer, namespaces)
+                        } else {
+                            tree.accept(writer, namespaces)
+                        }
                     }
                 }
             }.also {

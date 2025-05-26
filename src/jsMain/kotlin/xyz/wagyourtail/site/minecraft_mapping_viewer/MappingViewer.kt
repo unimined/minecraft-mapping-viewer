@@ -88,7 +88,6 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
             LOGGER.info { "Updating mappings view" }
             loading.setState(true)
-            app.titlebar.typeahead.input.tomSelectJs?.clearOptions()
             measureTime {
                 singleRender {
                     for (i in tabs.getTabs().indices.reversed()) {
@@ -105,7 +104,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                     classesTab.update(
                         app.settings.selectedMappingNs.value,
                         map?.filterClassByQuery(
-                            app.titlebar.typeahead.value ?: "",
+                            app.titlebar.searchValue.value,
                             SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
                         ) ?: emptyList()
                     )
@@ -137,12 +136,11 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
         }
 
         var prevQuery: Pair<SearchType, String>? = null
-        app.titlebar.typeahead.subscribe {
+        app.titlebar.searchValue.subscribe { query ->
             val type = SearchType.valueOf(app.titlebar.searchType.value ?: "KEYWORD")
-            val query = it ?: ""
             if (prevQuery == type to query) return@subscribe
             prevQuery = type to query
-            LOGGER.info { "Updating classes tab for query: $it" }
+            LOGGER.info { "Updating classes tab for query: $query" }
             activeChild = loadingDiv
             measureTime {
                 classesTab.update(
