@@ -50,7 +50,7 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
             try {
                 versions.setState(Model.requestVersions())
             } catch (t: Throwable) {
-                app.mappingViewer.showError(t)
+                app.mappingViewer.showError("Error requesting versions", t)
                 throw t
             }
         }
@@ -256,7 +256,7 @@ class Settings(val app: MinecraftMappingViewer) : VPanel(
             try {
                 availableMappings.setState(Model.availableMappings(mcVersion.value ?: return@launch, getEnv()))
             } catch (t: Throwable) {
-                app.mappingViewer.showError(t)
+                app.mappingViewer.showError("Error requesting available mappings", t)
                 throw t
             }
         }

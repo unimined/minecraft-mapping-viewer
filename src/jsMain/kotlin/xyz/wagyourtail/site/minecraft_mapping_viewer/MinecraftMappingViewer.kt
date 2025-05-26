@@ -245,7 +245,7 @@ class MinecraftMappingViewer : Application() {
                                 version
                             )
                         } catch (t: Throwable) {
-                            mappingViewer.showError(t)
+                            mappingViewer.showError("Error requesting mappings", t)
                             throw t
                         }
                     }

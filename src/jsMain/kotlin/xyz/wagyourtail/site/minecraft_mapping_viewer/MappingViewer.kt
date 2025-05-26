@@ -3,18 +3,18 @@ package xyz.wagyourtail.site.minecraft_mapping_viewer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.logger
 import io.kvision.core.AlignContent
+import io.kvision.core.Border
+import io.kvision.core.BorderStyle
+import io.kvision.core.Col
+import io.kvision.core.Color
 import io.kvision.core.FlexDirection
 import io.kvision.core.JustifyContent
-import io.kvision.core.PElement
-import io.kvision.core.style
-import io.kvision.html.br
 import io.kvision.html.div
 import io.kvision.html.h4
 import io.kvision.html.p
 import io.kvision.panel.StackPanel
 import io.kvision.panel.flexPanel
 import io.kvision.state.ObservableValue
-import io.kvision.utils.em
 import io.kvision.utils.perc
 import io.kvision.utils.px
 import io.kvision.utils.rem
@@ -53,7 +53,10 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
         add(it)
     }
 
-    private val errorText = div("No mappings loaded")
+    private val errorText = div("No mappings loaded") {
+        marginTop = 1.rem
+        marginLeft = 1.rem
+    }
 
     private val loadingDiv = flexPanel(justify = JustifyContent.CENTER, alignContent = AlignContent.CENTER) {
         width = 100.perc
@@ -192,15 +195,25 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
         }
     }
 
-    fun showError(t: Throwable) {
+    fun showError(t: Throwable) = showError("An Unexpected Error Occurred", t)
+
+    fun showError(message: String, t: Throwable) {
         errorText.removeAll()
         errorText.apply {
             val iter = t.stackTraceToString().split("\n").iterator()
-            +iter.next()
-            for (line in iter) {
-                p(line) {
-                    marginLeft = 2.rem
-                    marginBottom = 0.px
+            h4(message)
+            div {
+                marginLeft = 1.rem
+                border = Border(2.px, BorderStyle.SOLID, Color.name(Col.GRAY))
+                padding = 5.px
+
+
+                +iter.next()
+                for (line in iter) {
+                    p(line) {
+                        marginLeft = 2.rem
+                        marginBottom = 0.px
+                    }
                 }
             }
         }
