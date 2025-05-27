@@ -36,7 +36,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
     val mappings = ObservableValue<LazyMappingTree?>(null)
 
-    val loading = ObservableValue(false)
+    val loading = ObservableValue(true)
 
     val loadingMessage = ObservableValue("Loading...").apply {
         subscribe {
@@ -53,7 +53,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
         add(it)
     }
 
-    private val errorText = div("No mappings loaded") {
+    private val errorText = div {
         marginTop = 1.rem
         marginLeft = 1.rem
     }
@@ -114,6 +114,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
             LOGGER.info { "Updating mappings view" }
             loading.setState(true)
+            loadingMessage.value = "Updating mapping tables"
             measureTime {
                 singleRender {
                     for (i in tabs.getTabs().indices.reversed()) {
@@ -140,15 +141,21 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                     }
 
                     LOGGER.info { "Updating constants tab" }
-                    constantsTab.update(app.settings.selectedMappingNs.value, map?.constantGroupList() ?: emptyList())
+                    constantsTab.update(
+                        app.settings.selectedMappingNs.value,
+                        map?.constantGroupList() ?: emptyList()
+                    )
                     if (map?.constantGroupsIter()?.hasNext() == true) {
                         tabs.addTab("Constants", constantsTab)
                     }
 
                     LOGGER.info { "Done updating tabs" }
 
-                    if (map == null || (!map.packagesIter().hasNext() && !map.classesIter().hasNext() && !map.constantGroupsIter().hasNext())) {
-                        LOGGER.info { "Mappings are empty!" }
+                    if (map == null || (!map.packagesIter().hasNext() && !map.classesIter()
+                            .hasNext() && !map.constantGroupsIter().hasNext())
+                    ) {
+                        errorText.removeAll()
+                        errorText.content = "No mappings selected!"
                         activeChild = errorText
                     } else {
                         activeChild = tabs
@@ -167,16 +174,18 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
             if (prevQuery == type to query) return@subscribe
             prevQuery = type to query
             loading.setState(true)
-            loadingMessage.value = "Searching: $query"
+            loadingMessage.value = "Searching for \"$query\" ($type)"
             activeChild = loadingDiv
             measureTime {
-                classesTab.update(
-                    mappings.value?.namespaces ?: emptyList(),
-                    mappings.value?.filterClassByQuery(
-                        query,
-                        type
-                    ) ?: emptyList()
-                )
+                singleRender {
+                    classesTab.update(
+                        mappings.value?.namespaces ?: emptyList(),
+                        mappings.value?.filterClassByQuery(
+                            query,
+                            type
+                        ) ?: emptyList()
+                    )
+                }
             }.also {
                 LOGGER.info { "finished updating search in $it" }
                 activeChild = tabs
@@ -199,6 +208,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
 
     fun showError(message: String, t: Throwable) {
         errorText.removeAll()
+
         errorText.apply {
             val iter = t.stackTraceToString().split("\n").iterator()
             h4(message)
@@ -206,7 +216,6 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                 marginLeft = 1.rem
                 border = Border(2.px, BorderStyle.SOLID, Color.name(Col.GRAY))
                 padding = 5.px
-
 
                 +iter.next()
                 for (line in iter) {
@@ -217,6 +226,7 @@ class MappingViewer(val app: MinecraftMappingViewer) : StackPanel() {
                 }
             }
         }
+
         activeChild = errorText
     }
 
