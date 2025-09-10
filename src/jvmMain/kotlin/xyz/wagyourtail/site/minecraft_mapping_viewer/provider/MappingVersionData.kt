@@ -134,8 +134,8 @@ class MappingVersionData(val mcVersion: MCVersion, val env: EnvType) {
             append(".umf")
         })
 
-        // not exists, or is older than 1 day
-        if (!cacheFile.exists() || cacheFile.getLastModifiedTime().toMillis() < System.currentTimeMillis() - 1.days.inWholeMilliseconds) {
+        // not exists?
+        if (!cacheFile.exists()) {
             measureTime {
                 val resolver = MappingResolverImpl("patch", ::getInheritanceTree)
 

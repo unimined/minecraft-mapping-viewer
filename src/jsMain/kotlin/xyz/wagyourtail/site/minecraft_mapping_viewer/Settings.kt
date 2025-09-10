@@ -28,17 +28,26 @@ import xyz.wagyourtail.site.minecraft_mapping_viewer.storage.writeStorageValue
 import xyz.wagyourtail.unimined.mapping.EnvType
 import xyz.wagyourtail.unimined.mapping.Namespace
 
-@OptIn(ExperimentalStdlibApi::class)
 class Settings(val app: MinecraftMappingViewer) : VPanel(
     className = BsBgColor.BODYSECONDARY.className,
 ) {
     val LOGGER by KotlinLogging.logger()
     init {
         whiteSpace = WhiteSpace.NOWRAP
-        h3 {
-            +"Settings"
+        overflowY = Overflow.SCROLL
+        overflowX = Overflow.HIDDEN
 
-            textAlign = TextAlign.CENTER
+        div(className = BsBgColor.BODYSECONDARY.className) {
+            width = 100.perc
+            position = Position.STICKY
+            top = 0.px
+            borderBottom = Border(1.px, BorderStyle.SOLID, Color.name(Col.GRAY))
+
+            h3 {
+                +"Settings"
+
+                textAlign = TextAlign.CENTER
+            }
         }
     }
 

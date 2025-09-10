@@ -57,7 +57,7 @@ kotlin {
                 api("io.kvision:kvision-server-ktor-koin:$kvisionVersion")
                 api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 
-                api("xyz.wagyourtail.unimined.mapping:unimined-mapping-library:1.2.0")
+                api("xyz.wagyourtail.unimined.mapping:unimined-mapping-library:1.2.1")
 
                 api("xyz.wagyourtail.commons:commons-kt:1.0.0-SNAPSHOT")
             }
